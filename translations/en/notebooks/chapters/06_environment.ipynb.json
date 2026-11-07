@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "source": "notebooks/chapters/06_environment.ipynb",
+  "language": "en",
+  "glossary_sha256": "52433c24e8c1a4bceb9ce80bfc4df53475c4cc7d646c1fd88be88f7db4ec7950",
+  "review_status": "machine-translated; structure checked; cross-chapter learning flow reviewed; live-execution and plain-English wording reviewed",
+  "units": {
+    "intro-06-00": {
+      "source_sha256": "1ecab99c602534d02553d4044af3654286f32126b9fad2839933594788609c92",
+      "text": "# Chapter 6. Preparing the Execution Environment and Dependencies\n\nAdd pandas installation and initialization checks to the file workflow.\n\n| Connection | This chapter |\n| --- | --- |\n| Shared example | Sales analysis of the same sales.csv |\n| New capability | packages, setup_commands, installation location, and environment records |\n| Exercise composition | OpenAI-hosted · pandas · analysis files and environment.json |\n"
+    },
+    "intro-06-01": {
+      "source_sha256": "521877e7f3e331b600c7a6ddb764f274863dd79b195f2c453a9398e41765ddb3",
+      "text": "<!-- colab-link -->\n[Standalone notebook download instructions](../../docs/colab.md) · For upload to Colab\n"
+    },
+    "c8abd1d7a0ea": {
+      "source_sha256": "de4f561c119556c0d16d1c71f1d21db0f84743748ef9b80676175315b1d1dc03",
+      "text": "## Learning Guide\n\n| Aspect | Chapter 5 | This chapter |\n| --- | --- | --- |\n| Analysis library | Python standard library | pandas installed in the remote sandbox |\n| Environment preparation | Place the CSV input | Prepare packages, input, and an initialization script |\n| Output files | Analysis JSON and report | Analysis JSON, report, and environment information |\n\nConfigure the environment in the notebook → send `sessions.create()` → prepare remote packages and files → run `setup_commands` → perform agent analysis → download results. Splitting preparation into cells does not start installation; local preparation cells only construct the request.\n\nThis run analyzes with pandas. It neither automatically reruns standard-library analysis from earlier chapters nor retrieves a previous Session's results. The validator compares this result with reference values from the same CSV.\n\nRun manually from top to bottom, or validate automatically with `uv run --group dev python scripts/run_intro.py --chapter 6 --live`. Distinguish local installation, remote preparation, model responses, and separate reference validation.\n"
+    },
+    "4eb72829": {
+      "source_sha256": "674df1ec90ceb36110c44b09cbafe4a54ab9dbfe68c2f65023c75d308ce0c6e7",
+      "text": "**Exercise guide:** Run each chapter independently in a fresh kernel. See the [shared learning and exercise guide](../../docs/validation.md) for execution modes, response/file differences, and validation records.\n"
+    },
+    "intro-06-02": {
+      "source_sha256": "8614865f0253bfa34027e523b47c9591f8193ca8c03ad814723f9ea66cee2865",
+      "text": "## 0. Exercise Preparation and Execution Modes\n\nLocally, run `uv sync --locked` and `uv run jupyter lab` from the repository root, then select the `.venv` kernel.\nIn Colab, upload the standalone notebook provided in the download instructions. The preparation cell installs packages directly and creates the bundled code and data.\nExplicitly enable live API exercises with **RUN_LIVE=True**.\nThe key is read from `.env.local` or Colab Secrets and is never printed. Live execution incurs costs.\n"
+    },
+    "intro-06-05": {
+      "source_sha256": "8195358b8a3e1274c558ee729727d6eac8bb08c4bfaef90154fbf07dc3e3c504",
+      "text": "## 1. Prepare Input, Initialization Code, and the Environment Request\n\n### Local and Remote Python Environments Are Separate\n\n| Location | What is prepared |\n| --- | --- |\n| Local `.venv` or Colab | API client, Jupyter, and tutorial code |\n| OpenAI-hosted sandbox | pandas for the agent's analysis |\n| Public package repository | Packages used to install remote dependencies |\n\nLocal `uv sync` does not install pandas in the sandbox. Define the remote version once in `PANDAS_VERSION` below and use it for both the package request and initialization check. Read the original CSV as bytes, as in Chapter 5. No API call or remote installation has occurred yet.\n"
+    },
+    "06-setup-guide": {
+      "source_sha256": "b7610b7bcbf9cfd19520362cc92afe5c78a5d3d44d0453c7719bbadf010d016d",
+      "text": "### Define the Initialization Script\n\nThe next string is the content of `check_setup.py` to supply to the sandbox. Define and display it locally without importing or running pandas.\n\n1. Check for the sandbox CSV and the requested pandas version.\n2. Check the input column structure.\n3. Record pandas and Python versions and input row count in `/workspace/setup_info.json`.\n\nInitialization does not calculate reference revenue. An unmet condition raises an exception; do not turn initialization failure into a successful empty report.\n"
+    },
+    "06-environment-guide": {
+      "source_sha256": "5e4737fc6790f2608d82dbdad1dcf86e9ed47684de264102be4bfa32f5356919",
+      "text": "### Configure the Environment Sent to the API\n\n| Field | Role in this exercise |\n| --- | --- |\n| `files` | Place the CSV and initialization script |\n| `packages.python` | Request remote pandas installation |\n| `network` | Restrict accessible sandbox domains |\n| `setup_commands` | Create the output directory, then run initialization checks |\n\nOnce files and packages are prepared, setup commands run in the specified order. The dictionary below is the final request configuration and is sent to the API in the execution step. Allowing public package repository domains is this example's configuration, not a guarantee of network access or authentication for other packages or private registries. [Chapter 12](12_self_hosted.ipynb) covers internal execution environments.\n\nDo not add API keys as plaintext environment variables or setup commands.\n"
+    },
+    "06-task-guide": {
+      "source_sha256": "2755dc97b4de917f5c9201058c5263089e33b8a27bec7363e8fdedbe58a8c18a",
+      "text": "### Request pandas Analysis and Published Outputs\n\nAsk the agent to read the input with pandas, write analysis JSON and a Korean report, and copy the initialization record verbatim to `/workspace/outputs/environment.json`. Compose `METRICS_CONTRACT` into the actual input message to specify the final JSON format.\n\nEnvironment information is an initialization record copied by the agent. Do not interpret it as an independently attested, tamper-proof execution record from the platform.\n"
+    },
+    "intro-06-07": {
+      "source_sha256": "c432dbf29f344c46cb0b2cce5a935ec74470d3d699a090c57a4e8b01670a670d",
+      "text": "## 2. Execute the Agent with Environment Preparation\n\nPass the environment configuration to `sessions.create()` to prepare the remote environment, run initialization, and analyze. Package preparation may delay the first text response.\n\n| Event to observe | Interpretation |\n| --- | --- |\n| `agent.session.created` | Record the Session and environment IDs |\n| `agent.session.environment.pending` | Progress related to environment preparation |\n| `agent.session.environment.ready` | Environment ready to connect; separate from version or calculation evidence |\n| `agent.session.environment.failed` | Environment failure; do not treat as success |\n\nDisplay only the types and environment IDs of received preparation events. Do not assume fixed event counts or ordering, or require a specific preparation event to be observed. Do not add full event capture or Trace collection.\n\nExecution and result-inspection stages use `cleanup_on_error()` to attempt cleanup on errors and ordinary interrupts. In the normal path, **run the cleanup cell in Section 6**, including when you stop studying between steps. Forced kernel termination does not guarantee automatic cleanup.\n"
+    },
+    "m7711069e4811": {
+      "source_sha256": "ca20c44f56c696644d9824e7562ea2c7b8f12fb370e62d4ed9be1a6d21f0607e",
+      "text": "#### Enable Live API Execution\n\nSelect `RUN_LIVE=True` in the configuration cell, then run this preparation cell. With the default False setting, execution stops here with an error message. Subsequent API cells do not repeat the execution-enabled check. The `requires_api` tag is for the offline validator and is not an access control mechanism in Jupyter itself.\n"
+    },
+    "mfc13719ca223": {
+      "source_sha256": "f6dd9b9a531bbb58370cbfdf5e61b61ac590888eb3c62730cdb336a834e90116",
+      "text": "### Prepare State for This Run\n\n`output_dir` is a local path for recovery records and downloads. Run state preparation once at the start of a new run. Rerunning it during execution can discard resource identifiers.\n\nStart the timer immediately before API execution to exclude study time between cells. The 600-second limit is checked when events arrive and cannot forcibly interrupt a silent stream. The client HTTP timeout is 90 seconds.\n"
+    },
+    "m92a1d306224f": {
+      "source_sha256": "2a8c70d00741b18ab3e4988c0f599c03801dc2231d36afcd9f1458af0dd6a73a",
+      "text": "### Create the Session and Observe Preparation and Analysis\n\nThis cell submits new work, so duplicate execution is blocked. Display text deltas while collecting the final response with `with_result_collection()`. Handle failures and cancellation with `check_event()`.\n\nConfirm completion in both the `get_final_result()` result and the stored root Turn, then display the final analysis JSON. Preparation events, Turn completion, and successful JSON parsing do not establish calculation correctness.\n"
+    },
+    "06-publication-guide": {
+      "source_sha256": "4506a50569725c52611bd8111e0fbfba0db16f0f8620d595f7f521d2b2a9e0d7",
+      "text": "## 3. Inspect This Turn's Published Files\n\nAs in Chapter 5, iterate through SDK pages from `artifacts.list()` and display files matching the result's Session and Turn IDs. File IDs, paths, and sizes are publication metadata, separate from actual downloading and content correctness.\n\n| Output file | Contents |\n| --- | --- |\n| `/workspace/outputs/summary.json` | Analysis summary |\n| `/workspace/outputs/report.md` | Korean sales report |\n| `/workspace/outputs/environment.json` | Copy of the initialization record |\n\nSandbox working files, published artifacts, and local downloads are separate objects. Download required files before deleting the session.\n"
+    },
+    "06-download-guide": {
+      "source_sha256": "18043e639fcbd5020bf28071f685c3bbf3b90386af382eea2315babc9a6ebedf",
+      "text": "## 4. Download All Three Output Files\n\nScope selection to the completed Session and Turn with `artifacts.for_result(result)` and specify exact remote paths. The SDK rejects missing or duplicate matches, so do not add a custom selector. Repeat the same download operation for three files while keeping the API call visible in the cell.\n\n`to=` is a local destination. Inspect returned artifact IDs, Turns, and remote paths alongside actual local paths and sizes. Mark completion only after all three downloads succeed.\n\nRerun only before session cleanup. A partial transfer or failure of the last file is not success. Error handling attempts cleanup, so retries in the same session are not guaranteed; do not automatically rerun the analysis.\n"
+    },
+    "06-results-guide": {
+      "source_sha256": "3f16e637207f6efcb9b946b3c83d4dcda67d76b0554919ec0b5dbad11e9df33a",
+      "text": "## 5. Read Environment Information and Actual Analysis Results\n\n| Record | How it is produced |\n| --- | --- |\n| `/workspace/setup_info.json` | The setup script records versions and input preparation state |\n| `/workspace/outputs/environment.json` | The agent is asked to copy the setup record verbatim |\n| Local `environment.json` | Artifact downloaded from that Turn |\n\nThe cell below compares the requested and recorded pandas versions and displays Python version and input row count. A version mismatch is an error. The environment file is a copied record, without independent platform verification or tamper protection.\n\nAlso read the local analysis JSON and report. This normal path uses local files without new API requests. Version comparison is part of this chapter's environment lesson; a separate validator checks CSV reference values, report contents, and input row count. Distinguish a recorded automated pass from manual output inspection.\n"
+    },
+    "intro-06-10": {
+      "source_sha256": "d4cc1c0e473b547ec3904cb1a74121080275a82c743c3fc878e80cb716a7b05b",
+      "text": "## 6. Clean Up the Session and Retain Local Results\n\nRun the cleanup cell even if you stop studying between stages. Closing a stream does not delete the session. The cleanup helper finds owned sessions using this run's metadata, cancels work if needed, then deletes and confirms API absence through retrieval returning `404`.\n\nInspect `deleted` and `verified_absent` in the output. These do not establish synchronous completion of physical sandbox cleanup. Preserve an existing execution or validation error if cleanup also fails.\n\nThe validator adds history and file-content checks before deletion and still attempts cleanup on failure. All three local files and result objects remain after deleting the session. Do not assume server files can be downloaded again after deletion.\n"
+    },
+    "intro-06-09": {
+      "source_sha256": "7292223f11bd714b6ca7e00a76a56ea1fcaa170674d907722907406b1244124b",
+      "text": "## 7. Reproducibility, Networking, and Failure Actions\n\n`uv.lock` pins local dependencies, while `environment.packages.python` separately specifies remote pandas. Pinning that version alone does not fix transitive dependencies, operating-system images, external APIs, or model responses.\n\n| Failure stage | What to inspect |\n| --- | --- |\n| Package preparation | Selected version, repository access, and network settings |\n| Setup checks | CSV path, column structure, and pandas version condition |\n| Analysis Turn | Failed or cancelled state, separate from preparation |\n| Download | Missing artifacts, exact Turn and path, partial files, and cleanup results |\n| Forced kernel termination | Identify only this run using its Session ID and `outputs/intro/<chapter>/<run_id>/creation.json` |\n\nDo not print keys or raw error bodies. Do not retry the same failed request indefinitely or automatically switch environment types. For 401/403, check authentication and project access; for 429, check API limits. If you used the validator, also inspect the local `summary.json`. See the [quickstart](../quickstart.ipynb) for recovery steps.\n"
+    },
+    "intro-06-12": {
+      "source_sha256": "4afc666a1a72596f527ee0f362e74ea4a95decac2ecbe1cad3ce7ffddc873a90",
+      "text": "## Introductory Course Completion and the Next Chapter\n\n- Distinguish local and remote package installation and explain package and file preparation, setup checks, and subsequent analysis.\n- Interpret the final response, publication metadata, three local files, requested versus recorded version, and session deletion results separately.\n- The manual exercise inspects files and outputs. A separate validator uses reference values from the same CSV to compare standard-library and pandas calculation correctness. Earlier chapters need not be rerun.\n\n[Chapter 7: Function Tool](07_function_tools.ipynb) connects an application business function to the sandbox-based calculation flow. Continue by distinguishing function execution from sandbox execution.\n"
+    },
+    "refs-8777d960ecf6": {
+      "source_sha256": "1fe8ed81d89843f048931a94e17593774c22735795c590604808f244e71bdeda",
+      "text": "## Official References\n\n### Agents API-Specific Documentation\n\n- [OpenAI-hosted sandboxes](https://developers.openai.com/api/docs/guides/agents-api/environments/openai-hosted) — packages, setup_commands, initial files, and network settings.\n- [Sandbox security](https://developers.openai.com/api/docs/guides/agents-api/environments/security) — isolation, networking, execution permission review, and credential separation.\n\nLinks checked: 2026-11-03. Checking documentation links is separate from validating API exercise execution.\n"
+    }
+  }
+}

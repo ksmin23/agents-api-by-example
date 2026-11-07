@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "source": "notebooks/quickstart.ipynb",
+  "language": "en",
+  "glossary_sha256": "52433c24e8c1a4bceb9ce80bfc4df53475c4cc7d646c1fd88be88f7db4ec7950",
+  "review_status": "machine-translated; structure checked; quickstart walkthrough guidance reviewed; live-execution and plain-English wording reviewed",
+  "units": {
+    "quickstart-preface-00": {
+      "source_sha256": "5584df4c87b13a1563c16b6e59a2bd25df4fdf1db9b16bbf1c55670e9d7bf651",
+      "text": "# Quickstart: Run Your First Session\n\nExperience **Session creation → event streaming → completed state, final JSON, and command results → automatic cleanup** with a small Python calculation. Supply only three numbers; later chapters cover CSV and file downloads. See [Chapter 1](chapters/01_concepts.ipynb) if you prefer to read the concepts first.\n\nActual OpenAI-hosted sandbox and model use incurs costs. Keep the API key in the client, never in requests or the sandbox. RUN_LIVE=False stops at the API preparation cell by default. Use the offline validator to check only local cells without a key.\n"
+    },
+    "quickstart-preface-01": {
+      "source_sha256": "513d22f15f56de7f2bdf81838059414794c92f71256d8a4a617e00451c046495",
+      "text": "<!-- colab-link -->\n[Standalone download instructions](../docs/colab.md) · For upload to Colab\n"
+    },
+    "efe75b76": {
+      "source_sha256": "56424e368ca8313a51afa88b51ad8e6afed04205fe14797740ad7c20d7a2040a",
+      "text": "**Exercise scope:** Manual execution shows API calls, final responses, command history, and cleanup directly. The validation script adds expected-answer checks, detailed execution evidence, and receipts only to an execution copy. [Exercise Guide and Validation Scope](../docs/validation.md)\n"
+    },
+    "23230f5e": {
+      "source_sha256": "f68aaf77fdc066575c9ed84e4f9104820cc52f36d888cdc26ff39cd30c90e4ab",
+      "text": "## Exercise Steps and Expected Output\n\n| Stage | Your action | Output to inspect |\n| --- | --- | --- |\n| Prepare | Configure the key/model and select RUN_LIVE=True | Live execution enabled and selected model |\n| Request | Read Agent, environment, and task configuration | Execution environment and input description |\n| Run | Wait for the execution cell to finish | Session ID and progress text |\n| Results | Inspect persisted state, response, and commands in the same cell | Root Turn, JSON, command status/exit code/stdout |\n| Automatic cleanup | Inspect the same cell's finally outcome | Session deletion and confirmed absence |\n\nKeep this short execution and cleanup in one cell. After results appear, wait until cleanup also finishes.\n"
+    },
+    "quickstart-preface-02": {
+      "source_sha256": "6eeddc13b1fd18a9c946640ce832cd88fbe082e2d7871cd987bd0601c4accf51",
+      "text": "## 0. Prepare Dependencies and Inputs\n\nLocally, run uv sync --locked in a terminal and select the project's .venv kernel. See [Environment Setup](setup.ipynb) for installation and kernel configuration.\n\nIn Colab, upload the [standalone notebook](../docs/colab.md), run package and bundled-file preparation cells, then configure Secrets. No GitHub URL or repository access is needed. The source bootstrap below performs no local installation; in the standalone notebook, it is replaced by direct package installation code.\n"
+    },
+    "quickstart-preface-04": {
+      "source_sha256": "2878e1348d9f57b3aca6f49219ed6938b5b2ebf46fef1a2214e731420affedef",
+      "text": "## 1. Allow Actual Execution and Inspect Settings\n\nSet RUN_LIVE to True below and run subsequent cells in order for actual calls. Stopping at API preparation with an explanatory error when False is intentional. Ordinary Jupyter does not skip cells merely because they carry requires_api. RUN_LIVE in .env.local does not authorize execution.\n\n| Environment | Key and model settings |\n| --- | --- |\n| Local | OPENAI_API_KEY and OPENAI_MODEL from .env.local, then process environment variables |\n| Colab | OPENAI_API_KEY and OPENAI_MODEL from Secrets |\n| Model override | MODEL_OVERRIDE takes precedence over model settings |\n\nNever enter or print a key in a cell. False does not read the key, and the model may be an empty string. True without required settings stops before any API request.\n"
+    },
+    "quickstart-preface-06": {
+      "source_sha256": "5032ea2afd8ea57e7a740d00ed36e01771f92c039f8e6d5c921dee49b2bb9b03",
+      "text": "## 2. Configure a Minimal Request\n\nAsk a small OpenAI-managed sandbox to create quickstart_sum.py and print the count and sum of three numbers. No extra packages or external services are used.\n\n| Request field | Meaning |\n| --- | --- |\n| agent | Model and Python calculation instructions |\n| environment | OpenAI-hosted sandbox for Python and commands |\n| input | Request to write/run the script and return final JSON |\n| stream | Observe events during execution |\n\nnetwork.access=disabled disables external sandbox access, independently of the local Python client's OpenAI API connection. Model and sandbox permissions may also differ; inspect settings after a permission error. No environment fallback is automatic.\n"
+    },
+    "quickstart-preface-08": {
+      "source_sha256": "eb90e4f7033e9fc08ca1caf165dd5782f3bb1b456cb21a35300394825f60f0ef",
+      "text": "## 3. Prepare Execution and Automatic Cleanup\n\nProgress text, completed state, final JSON, and command stdout are separate observations. A completed Turn or parseable JSON alone does not guarantee correct calculations. Display the original Turn's commands with status, exit code, and stdout; the validation tool checks the exact script and expected result.\n\nThe cleanup helper attempts cancellation for active work, retries deletion conflicts within bounds, then checks that Session retrieval returns 404. This confirms API absence, not synchronous completion of physical sandbox cleanup.\n"
+    },
+    "quickstart-preface-10": {
+      "source_sha256": "b4cef573bc7a0021051f2db1b2490c61fc010e1b09fdab56b3b11d7d6e324219",
+      "text": "## 4. Create, Stream, Inspect Results, and Clean Up Automatically\n\nSelect RUN_LIVE=True in settings, run API preparation, then prepare state and execute. Prepare state once with a fresh client. Reinitializing can lose earlier Session identifiers. Repeating creation is blocked as a duplicate request for the same run.\n\nwith_result_collection gathers progress events and the final response. Save the Session ID immediately from its creation event and supplement it from the collected result. Retrieve the same original root Turn, confirm completion, then display JSON and command history. This basic example does not automatically handle requires_action.\n\nKeep execution, result inspection, and cleanup in one try/finally. Ending a stream alone does not cancel work. HTTP timeout=90 and state/history query timeout=15 are not a strict overall runtime limit. For interruption, use Jupyter interrupt and inspect cleanup. Forced kernel or process termination cannot guarantee finally execution.\n"
+    },
+    "m24bfee9d1cf7": {
+      "source_sha256": "ca20c44f56c696644d9824e7562ea2c7b8f12fb370e62d4ed9be1a6d21f0607e",
+      "text": "#### Enable Live API Execution\n\nSelect `RUN_LIVE=True` in the configuration cell, then run this preparation cell. With the default False setting, execution stops here with an error message. Subsequent API cells do not repeat the conditional check for whether to run. The `requires_api` tag is for the offline validator; it is not access control provided by Jupyter itself.\n"
+    },
+    "quickstart-preface-12": {
+      "source_sha256": "81ff9dfe66f15fb247211ebb86cf3df489fcd1848fd5806831dcdfcbc48c4d7e",
+      "text": "## 5. Confirm Execution Has Finished\n\nThe next cell reads only results and cleanup records retained in memory. It does not call APIs with the closed client or create another Session. Results checked means display and format checks, distinct from passing the validator's expected-answer comparisons.\n\nusage=None means unreported, not numeric zero. Cached/reasoning tokens are subsets of input/output tokens and must not be added again. After an execution error, inspect the original error and cleanup records before this summary. Do not resubmit the same run; begin with a fresh client and state.\n"
+    },
+    "quickstart-preface-14": {
+      "source_sha256": "3294db36771958bdae402528dca8498fd6d60169cb398555fdbb981799cabca6",
+      "text": "## 6. What to Do After Failure or Interruption\n\n| Situation | What to inspect and do next |\n| --- | --- |\n| Configuration error or 401/403 | Check key, model, project permissions, and Agents API/sandbox access; never print keys |\n| Failed/cancelled Turn or unexpected external action | Inspect the original error and cleanup records rather than report success |\n| Invalid JSON or missing command history | Inspect that Turn's history rather than trust completion text |\n| Deletion conflict or cleanup failure | Inspect bounded retries and this run's owned resources in creation.json |\n| Disconnection or timeout | Investigate the original outcome before submitting the same input in a new Session |\n| Forced kernel termination | Use unique metadata and saved IDs from outputs/quickstart/<run_id>/creation.json to clean up only this run |\n\nThis example attempts cleanup even on errors and closes the client. Use a fresh client for recovery queries and first check whether the Session was already deleted. If no ID was received, identify owned resources using tutorial_run_id and tutorial_creation_id in creation.json. Automatic resumption is not implemented.\n\n```python\n# Optional manual recovery: create a fresh client and verify ownership first.\n# from openai import OpenAI\n# from tutorial_helpers.common import load_settings, delete_session_safely\n# recovery_settings = load_settings(run_live=True)\n# with OpenAI(api_key=recovery_settings.api_key, timeout=15, max_retries=0) as recovery_client:\n#     delete_session_safely(recovery_client, \"saved_session_id_here\")\n```\n\n## Optional Investigation and Next Steps\n\nOnly when deeper investigation is needed, look up the printed Session ID in [Dashboard logs](https://platform.openai.com/logs?api=agents). This notebook does not call Trace APIs or export traces. Do not assume the Dashboard UI was automatically validated.\n\n- [Chapter 1: Core Concepts](chapters/01_concepts.ipynb): Review request and execution responsibilities.\n- [Chapter 2: CSV Analysis](chapters/02_first_agent.ipynb): Apply the same workflow to data analysis.\n- [Chapter 14: Observer Recovery](chapters/14_operations.ipynb): Distinguish reconnection from input resubmission.\n\nManual execution creates creation.json as an ownership investigation record. Run uv run --group dev python scripts/run_quickstart.py --live for automatic validation; only its execution copy adds expected-answer/command checks and summary.json. Use uv run --group dev python scripts/check_notebooks.py --execute to check local cells without a key. The execution copy is outputs/quickstart-validation/quickstart.executed.ipynb; validation records are outputs/quickstart/<run_id>/summary.json. Deleting local files does not delete remote Sessions.\n"
+    },
+    "refs-486901314326": {
+      "source_sha256": "57dbe03d1b1f68b4d07693c44da543531202afd29fd69a4b4e882518de7ab278",
+      "text": "## Official References\n\n### Agents API-Specific Documentation\n\n- [Agents API quickstart](https://developers.openai.com/api/docs/guides/agents-api/quickstart) — Session creation, streaming, result inspection, and resource cleanup.\n- [Events and items](https://developers.openai.com/api/docs/guides/agents-api/sessions/events) — Event streams, completion status, and retrieval of stored items and turns.\n- [Manage sessions](https://developers.openai.com/api/docs/guides/agents-api/sessions/manage) — Checking current status and pending actions, and deleting Sessions.\n- [OpenAI-hosted sandboxes](https://developers.openai.com/api/docs/guides/agents-api/environments/openai-hosted) — packages, setup_commands, initial files, and network settings.\n\nLinks checked: 2026-11-03. Checking documentation links is separate from validating execution of the API lab.\n"
+    }
+  }
+}

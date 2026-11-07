@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "sales_targets": {
+      "command": "python",
+      "args": [
+        "servers/sales_targets_server.py",
+        "--data",
+        "assets/sales_targets.json"
+      ],
+      "cwd": "."
+    }
+  }
+}

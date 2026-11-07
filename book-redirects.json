@@ -1,0 +1,18 @@
+{
+  "getting-started": "setup",
+  "architecture": "concepts",
+  "concepts-1": "concepts",
+  "first-agent-1": "first-agent",
+  "sessions-1": "sessions",
+  "agent-configuration-1": "agent-configuration",
+  "files-artifacts-1": "files-artifacts",
+  "environment-1": "environment",
+  "function-tools-1": "function-tools",
+  "mcp-1": "mcp",
+  "skills-1": "skills",
+  "plugins-1": "plugins",
+  "guardrails-approvals-1": "guardrails-approvals",
+  "self-hosted-1": "self-hosted",
+  "hooks-telemetry-1": "hooks-telemetry",
+  "operations-1": "operations"
+}

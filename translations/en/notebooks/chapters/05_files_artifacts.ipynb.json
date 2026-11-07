@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "source": "notebooks/chapters/05_files_artifacts.ipynb",
+  "language": "en",
+  "glossary_sha256": "52433c24e8c1a4bceb9ce80bfc4df53475c4cc7d646c1fd88be88f7db4ec7950",
+  "review_status": "machine-translated; structure checked; cross-chapter learning flow reviewed; live-execution and plain-English wording reviewed",
+  "units": {
+    "intro-05-00": {
+      "source_sha256": "d6d47072b25b905de749d59506d5162996f6c1de7257939a5c77e76551c5cbf8",
+      "text": "# Chapter 5. File Input and Downloading Outputs\n\nSupply CSV as a sandbox file and download the report.\n\n| Connection | This chapter |\n| --- | --- |\n| Shared example | Sales analysis of the same sales.csv |\n| New capability | File inputs, Artifact publication, and downloads |\n| Exercise composition | OpenAI-hosted · standard library · base metrics and report |\n"
+    },
+    "intro-05-01": {
+      "source_sha256": "521877e7f3e331b600c7a6ddb764f274863dd79b195f2c453a9398e41765ddb3",
+      "text": "<!-- colab-link -->\n[Standalone notebook download instructions](../../docs/colab.md) · For uploading to Colab\n"
+    },
+    "1e8bfbdf1aff": {
+      "source_sha256": "a98d4749a60248b897c08f9fc47a5aeb4a30cc6079d8e70b1df85e27edce8dee",
+      "text": "## Learning Guide\n\nReplace the message-based CSV input from Chapters 2–4 with file input. Send task instructions and file paths in the input message instead of raw CSV. A final answer claiming files were created does not establish publication, successful downloading, or content correctness.\n\n| Stage | API or value used directly | What to inspect |\n| --- | --- | --- |\n| Prepare input | `environment.files` | Sandbox destination for the local CSV |\n| Execute | `sessions.create()` | Session and Turn IDs, completion, and final JSON |\n| Inspect publication | `artifacts.list()` | File IDs, paths, and sizes for this Turn |\n| Download | `for_result(result).download()` | Selected files and local destinations |\n| Read locally | Downloaded JSON and Markdown | Analysis values and the actual report |\n| Cleanup | Deletion and retrieval in the cleanup helper | API absence of the created session |\n\nRun the cells below from top to bottom for the manual exercise. For automated validation, run `uv run --group dev python scripts/run_intro.py --chapter 5 --live`. Distinguish the manual output from a recorded pass by the separate validator.\n"
+    },
+    "8d8b7136": {
+      "source_sha256": "674df1ec90ceb36110c44b09cbafe4a54ab9dbfe68c2f65023c75d308ce0c6e7",
+      "text": "**Exercise guide:** Run each chapter independently in a fresh kernel. See the [shared learning and exercise guide](../../docs/validation.md) for execution modes, response/file differences, and validation records.\n"
+    },
+    "intro-05-02": {
+      "source_sha256": "8614865f0253bfa34027e523b47c9591f8193ca8c03ad814723f9ea66cee2865",
+      "text": "## 0. Lab Setup and Execution Modes\n\nLocally, run `uv sync --locked` and `uv run jupyter lab` from the repository root, then select the `.venv` kernel.\nIn Colab, upload the standalone notebook provided in the download instructions. The setup cell installs packages directly and generates the bundled code and data.\nExplicitly enable the live API lab with **RUN_LIVE=True**.\nThe key is read from `.env.local` or Colab Secrets and is never printed. Live execution incurs costs.\n"
+    },
+    "intro-05-05": {
+      "source_sha256": "ffcd197a3b0ecf4cf5e3a1a2ac2be1b7d0d50e235eaa975af8e3aeef515dde8b",
+      "text": "## 1. Prepare the Input File and Paths\n\n| Location | Path in this exercise | Role |\n| --- | --- | --- |\n| Local input | `data/sales.csv` | Source read by the notebook |\n| Sandbox input | `/workspace/sales.csv` | File read by the agent |\n| Sandbox output | `/workspace/outputs/summary.json`, `/workspace/outputs/report.md` | Results written by the agent |\n| Local downloads | `outputs/intro/<chapter>/<run_id>/downloads/` | Results retained by the learner |\n\n`environment.files[].path` is a destination inside the sandbox. The destination in the later `download(..., to=...)` call is local. Identical filenames do not make them the same file in the same filesystem.\n\nFirst read the local CSV as bytes and display its contents. This step neither calls the API nor transfers a file.\n"
+    },
+    "cd20e0b3": {
+      "source_sha256": "f928c68b56ec5029a1988f958d752d69170d8f07d2f00d07dc6d93c7904af855",
+      "text": "### Inline File Input\n\nBase64 encodes file bytes for a JSON request. Supply a standard base64 string in `data`, without a data URL prefix. Display input paths, byte count, and output paths rather than the long encoded value.\n\nThis approach creates no separate Files API upload object or file ID. The environment configuration is sent by `sessions.create()` in the execution step. Disable external sandbox networking because the task uses only the standard library.\n"
+    },
+    "05-task-guide": {
+      "source_sha256": "068eb9a1f85b31dddd9acf9d62a48cb7170b0e7f9872d661a6ddc47ea1290f73",
+      "text": "### Request File Analysis and Saved Outputs\n\nThe input message asks the agent to read the existing `/workspace/sales.csv` with Python and create two result files. Compose `METRICS_CONTRACT` into the actual message to define the final JSON format in one place. Request a Korean report; the English book uses identical executable code.\n"
+    },
+    "intro-05-07": {
+      "source_sha256": "29226a7fd475e10e2577f0d59b13b0e7d51200ff3f9d26ff18de33facef8c1dd",
+      "text": "## 2. Run the Agent and Confirm Completion\n\nPass the environment containing file input, Agent instructions, and task message directly in the session creation request. Streamed text and final JSON are model responses; inspect file publication and downloading separately.\n\nEach stage uses `cleanup_on_error()` to attempt cleanup on errors and ordinary interrupts. In the normal path, **run the cleanup cell in Section 6**, including when you stop studying between steps. Forced kernel termination does not guarantee automatic cleanup.\n"
+    },
+    "mb5ec276c9fde": {
+      "source_sha256": "ca20c44f56c696644d9824e7562ea2c7b8f12fb370e62d4ed9be1a6d21f0607e",
+      "text": "#### Enable Live API Execution\n\nSelect `RUN_LIVE=True` in the configuration cell, then run this setup cell. With the default False setting, execution stops here with an error message. Subsequent API cells do not repeat the execution-mode conditional. The `requires_api` tag is for the offline validator; it is not access control enforced by Jupyter itself.\n"
+    },
+    "m1406e1c317a0": {
+      "source_sha256": "d986eb78e4b1ec3df9f09f905ada24d8f2cbd581289712602123ac3809b62f06",
+      "text": "### Prepare State for This Run\n\n`output_dir` is a local path for this run's recovery records and downloads. Run state preparation once when starting a new run. Rerunning it during execution can discard resource identifiers.\n\nThe timer starts immediately before API execution below. The 600-second limit is checked when events arrive, so it cannot forcibly interrupt a silent stream. The client HTTP timeout is 90 seconds.\n"
+    },
+    "m7cfac2de62ea": {
+      "source_sha256": "77b191323cb895a78a5418123562c13c54dd54578fe5e10733b0943f700e9a39",
+      "text": "### Create the Session and Stream\n\nImmediately record the Session ID on `agent.session.created` and display text deltas. Treat unexpected external actions as errors and detect failures and cancellation with `check_event()`. Do not assume fixed event counts or ordering, or treat `idle` alone as success.\n\nObtain the collected response with `get_final_result()` after using `with_result_collection()`, then retrieve the stored root Turn. Inspect completion status and final JSON in the output. This cell submits new work, so duplicate submission within the same run state is blocked.\n"
+    },
+    "intro-05-09": {
+      "source_sha256": "1c2ec889787ca15b8d14787829e4477d1aed071c7ac1c4d369008bdb4d44cadc",
+      "text": "## 3. Inspect Files Published by This Turn\n\n| Object | Meaning |\n| --- | --- |\n| Sandbox file | Working file read and written by the agent |\n| Artifact | Immutable copy published by a completed Turn |\n| Local download | File retained by the learner and readable after session deletion |\n\nInspect publication of the results written under `/workspace/outputs`. Since `artifacts.list(session_id)` lists the whole session, display only entries matching this result's Session and Turn IDs. SDK iteration reads across pages.\n\nFile IDs, paths, Turn IDs, and byte counts below are publication metadata. They establish neither content correctness nor successful local downloading. Download required files before deleting the session.\n"
+    },
+    "05-download-guide": {
+      "source_sha256": "e5d3492eeb7c5081c5a3a916ac8ea2067c2c1c4085849fbe329030bb9b3de68d",
+      "text": "## 4. Download Exact Turn and Path Matches Locally\n\n| Call | Purpose |\n| --- | --- |\n| `artifacts.list()` | Inspect published files |\n| `artifacts.for_result(result)` | Scope selection to the result's Session and Turn |\n| `scoped.download(path, to=...)` | Select an exact remote path and save it locally |\n\nThe official SDK matches the Session, Turn, and path, raising an error for missing or multiple matches. Do not add a custom selection helper. Display the returned artifact metadata alongside the actual local destination and file size.\n\nThis cell does not submit new work. `exist_ok=True` allows reuse of this run's download directory, but rerun only before session cleanup. Transfer errors trigger cleanup attempts; partial files do not count as success. The basic example neither hides download failures nor automatically reruns the analysis.\n"
+    },
+    "05-local-results-guide": {
+      "source_sha256": "a534b2c04b478dce95b5f5f40a265d708e83e172990de9fa4a13f7a34bb31b22",
+      "text": "## 5. Read the Downloaded Files\n\nYou inspected the final response JSON in Section 2. Now parse the local `summary.json` and display `report.md`. The normal path below reads local files without new API requests. It checks JSON syntax and displays content for human inspection; it does not automatically check reference answers.\n\n| Check | Meaning |\n| --- | --- |\n| Turn completion | Inspect task status |\n| Artifact list | Inspect publication metadata |\n| Completed downloads and local reads | Confirm that result files were received and read |\n| Separate validator | Compare Python commands, CSV reference values, and report contents |\n\nIn the manual exercise, compare the final response with file values and read the report's title, row count, quantity, and revenue. Automated reference checks and receipts are added only to an execution copy. Successfully downloaded local files remain readable after deleting the session.\n"
+    },
+    "intro-05-10": {
+      "source_sha256": "8f23692e5b36151760765b99a420afc761fdcd0d20626f329c9705c61d0ab063",
+      "text": "## 6. Clean Up the Session and Retain Local Files\n\nThe required files are now available locally, so clean up this run's session. The cell below neither reruns the analysis nor downloads files again. Also run it if you stop studying between steps.\n\n`cleanup_resources()` uses this run's metadata to find sessions even if a creation response was lost, cancels work if needed, and confirms API absence through deletion and retrieval returning `404`. Inspect `deleted` and `verified_absent` in the output. These do not establish synchronous completion of physical sandbox cleanup.\n\nCleanup errors preserve the original execution or validation error. The validator adds history and file-reference checks before deletion and still attempts cleanup on failure. This chapter creates no separate saved Agent or Files API upload object. Examples adding such objects must manage their retention and deletion separately.\n\nDo not depend on downloading server files again after session deletion. Local downloads and result objects remain; deleting local files is separate from deleting the session.\n"
+    },
+    "intro-05-12": {
+      "source_sha256": "8745d146b23304deeb4a20d2af641ad72846589daad8be2913c84033e326782a",
+      "text": "## 7. Failure Actions and the Next Chapter\n\n| Situation | Action |\n| --- | --- |\n| 401/403 or 429 | Check authentication and project access, or API limits |\n| Turn completed but an expected artifact is absent | Inspect this Turn, the exact remote path, and publication list; distinguish completion from publication |\n| Only the first file downloaded | Do not report success after the second transfer fails; inspect partial files and cleanup results |\n| A file exists despite a transfer error | File existence alone does not prove completion; default error handling attempts session cleanup |\n| Disconnection or forced kernel termination | Inspect the saved Session ID, cleanup results, and `outputs/intro/<chapter>/<run_id>/creation.json` |\n\nDo not print keys or raw error bodies. Do not unconditionally create a new session with the same input. If you used the validator, also inspect the local `summary.json`. See the [quickstart](../quickstart.ipynb) for detailed recovery steps.\n\nFor manual completion, distinguish final JSON, publication metadata, local JSON and report contents, and session deletion results. [Chapter 6](06_environment.ipynb) adds pandas installation and environment initialization checks to the same file flow.\n\n**Further reading:** In [Chapter 15: Multi-agent](15_multi_agent.ipynb), files from different roles may be published in different Turns. This chapter's `for_result(result)` scopes selection to one completed Turn. When reusing paths across Turns, distinguish the owning Turn and file version.\n"
+    },
+    "refs-53c98700cf05": {
+      "source_sha256": "974e8723c8a5084bcac4a9d4fae5c6c4073772f00a59da80f70ab34cbf7a47d0",
+      "text": "## Official References\n\n### Agents API-Specific Documentation\n\n- [Files and artifacts](https://developers.openai.com/api/docs/guides/agents-api/environments/files) — File input, artifact downloads, and file lifetimes.\n- [Manage sessions](https://developers.openai.com/api/docs/guides/agents-api/sessions/manage) — Checking current state and pending actions, and deleting Sessions.\n\nLinks checked: 2026-11-03. Checking documentation links is separate from validating API lab execution.\n"
+    }
+  }
+}

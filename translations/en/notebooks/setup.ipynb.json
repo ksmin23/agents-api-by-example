@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "source": "notebooks/setup.ipynb",
+  "language": "en",
+  "glossary_sha256": "52433c24e8c1a4bceb9ce80bfc4df53475c4cc7d646c1fd88be88f7db4ec7950",
+  "review_status": "machine-translated; structure checked; setup walkthrough guidance reviewed",
+  "units": {
+    "00_setup-00": {
+      "source_sha256": "64ade76ec4023f77a5b4e6b239bdc88b1a923ea3c661cd100b468d01ac0b66c8",
+      "text": "# Environment Setup and Execution Checks\n\nCheck the kernel, packages, project, data, and cell execution in local Jupyter or Colab. No API key, model, client, or sandbox is used. Installation may need internet access to a package index, but the checks in this notebook do not call the OpenAI API.\n"
+    },
+    "00_setup-01": {
+      "source_sha256": "513d22f15f56de7f2bdf81838059414794c92f71256d8a4a617e00451c046495",
+      "text": "<!-- colab-link -->\n[Standalone download instructions](../docs/colab.md) · For upload to Colab\n"
+    },
+    "0a895d786683": {
+      "source_sha256": "2c1339e9d2af629e76df8badd3c8e7e5f6206584ef9068ff475b1e7e6fe876e4",
+      "text": "## Preparation Goals and Execution Paths\n\n| Stage | What to inspect | Expected result |\n| --- | --- | --- |\n| Kernel | Python version, executable, and working directory | Identify the active Python and location |\n| Packages | SDK version and module location | Import openai in the current kernel |\n| Project | Shared helper and project root | Locate the project using tutorial.json |\n| Data | data/sales.csv | Read the shared input file |\n| Local execution | Small calculation, assert, and output | Confirm basic cell behavior |\n\n### Local Jupyter\n\nRun these commands in a terminal from the repository root, then open this notebook. Select the project's .venv Python as the VS Code/Jupyter kernel. The local reproduction reference is Python 3.12 in .python-version; pyproject.toml permits Python 3.11 or later. uv.lock controls package versions.\n\n```bash\nuv sync --locked\nuv run jupyter lab\n```\n\n### Colab\n\nUpload the standalone setup.ipynb from the [download guide](../docs/colab.md). When generated files are provided, _build/colab/setup.ipynb is that file. Preparation cells install packages directly and create bundled helpers/data in a temporary directory. No GitHub URL, repository access, or Colab Secrets are needed.\n\nColab uses its provided kernel Python, so it may differ from the local version. Inspect the actual version below. Package installation requires access to a public package index. This path does not replace Docker or private-network exercises. The local source bootstrap does not install packages; standalone generation replaces it with installation code.\n\nRun the following cells in order. uv.lock pins Python packages, but not operating systems, external tools, model responses, networks, or API state.\n\n\n### Optional Features and Package Installation\n\nThe default installation includes only the SDK and Jupyter exercise dependencies. Book builds, the full test suite, observability, and SOCKS proxies use optional groups. For Chapter 13, use `uv run --group telemetry jupyter lab` for in-memory spans or `uv run --group telemetry-otlp jupyter lab` for Collector delivery. Use `uv run --group proxy jupyter lab` in a SOCKS proxy environment. You can combine groups. Specify the same groups on uv run when using optional features; running without them can remove optional packages. If selecting a kernel directly in VS Code, first install the required groups with uv sync.\n\nIf an internal-index environment variable causes a lockfile error, compare with an explicit public index using `uv sync --locked --default-index https://pypi.org/simple`. Keep that index on subsequent runs, for example `uv run --default-index https://pypi.org/simple jupyter lab`. If company policy requires a private index, maintain a separate lock configuration for that policy. Never print credentials that may be embedded in proxy or index URLs.\n"
+    },
+    "00_setup-03": {
+      "source_sha256": "fdab919f38d19f6a10256337e5d1076573d9c4b728694bed9536c60a89f3d563",
+      "text": "## 1. Inspect the Active Python and Kernel\n\nCheck that the executable matches the selected kernel. Locally it is usually under the project's .venv; in Colab it belongs to the runtime. Do not enforce an environment solely from the path's shape. Select a supported kernel if Python is below the project's minimum version.\n"
+    },
+    "00_setup-05": {
+      "source_sha256": "f359c6212dd6effbb2b65bd9f78bcd83e3c6c7fc215a4824a19142d90b1bfcc2",
+      "text": "## 4. Check Local Cell Execution\n\nThe calculation below runs in the current Jupyter/Colab Python. Quickstart requests the same numeric exercise in a remote sandbox, making the execution locations easy to compare. A correct local sum does not verify API authentication, model access, or sandbox access.\n"
+    },
+    "00_setup-07": {
+      "source_sha256": "c70c6a5396adef8280c13f23cc19c4015a1b54bc16ecd0e98e72d0c6272f56c9",
+      "text": "## 5. Confirm Local Preparation\n\nRun all preceding cells in order, then read the completion summary. You have checked only the kernel, SDK, project, data, and calculation output. No API client or remote resources were created, so this notebook needs no live-execution switch.\n"
+    },
+    "00_setup-09": {
+      "source_sha256": "f6d18786bf87353a6d3a16e8304b1c6cc960c974c1549286f63c160ecabe7c5e",
+      "text": "## Troubleshooting and Next Steps\n\n| Symptom | Next action |\n| --- | --- |\n| openai missing or failing to import | Locally run uv sync --locked and select .venv; in Colab finish installation cells |\n| tutorial_helpers import fails | Check project installation, working directory, kernel, or Colab bundled-file preparation |\n| tutorial.json or CSV missing | Check the project root, repository files, or Colab file preparation |\n| An old import error persists after installation | Check the executable; restart the kernel/runtime if needed, then rerun preparation |\n| Python differs from the local reference | Check the project minimum and active kernel; Colab need not match the local version |\n\nDo not continue after failed installation or print keys/tokens as a troubleshooting step. Success here means local readiness, not successful API authentication.\n\n- Learn concepts without keys: continue to [Chapter 1](chapters/01_concepts.ipynb).\n- Run the actual API: configure key/model and explicitly allow execution in [Quickstart](quickstart.ipynb). Use a Git-excluded .env.local locally or Colab Secrets; never put keys in cells, outputs, or the sandbox.\n\n### Optional: Preview the Web Book\n\nWeb preview is separate from Python notebook execution. To inspect the same bilingual pages and download structure as deployment, run this in a terminal. See the local book preview instructions in the repository README for build tools and Node.js prerequisites.\n\n```bash\nuv run --group docs python scripts/preview_book.py --build\n```\n\nThe preview website is for reading the book; execute Python in Jupyter/Colab.\n"
+    },
+    "refs-1c5d924ad494": {
+      "source_sha256": "04000d84045163048ca96c0ee7f1f231e116acc08565d606463ce24fac8d4fc9",
+      "text": "## Official References\n\n### Agents API–Specific Documentation\n\n- [Quickstart — Prerequisites](https://developers.openai.com/api/docs/guides/agents-api/quickstart#prerequisites) — Prepare the Python SDK, API key, and permissions.\n\nLinks checked: 2026-11-03. Checking documentation links is separate from validating API exercise execution.\n"
+    },
+    "setup-packages-guide": {
+      "source_sha256": "9a032418eb2e805e461b25e5444c7a79df3c1040f8c21baa3b117da39b4dd1a7",
+      "text": "## 2. Check SDK Installation\n\nInspect the package version and location of the module imported by this kernel. SDK installation does not verify Agents API permissions or model/sandbox availability. Consult the troubleshooting table below if the package is missing or import fails.\n"
+    },
+    "setup-project-guide": {
+      "source_sha256": "90724415d63e7ca436865be6b390727680fc9a4a2582ba4fa8268388c5ce90c8",
+      "text": "## 3. Check the Project, Shared Helper, and Data\n\nImport the shared helper and find the project root from tutorial.json. Print the data/sales.csv path and number of bytes read without analyzing its contents. The helper searches upward from project subdirectories; Colab uses the temporary workspace created by preparation cells.\n\nModuleNotFoundError is not an API-key issue. Inspect installation/kernel selection or bundled-file preparation in Colab. If a path or file check fails, fix that preparation step before proceeding to completion.\n"
+    }
+  }
+}

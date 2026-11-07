@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "source": "notebooks/chapters/08_mcp.ipynb",
+  "language": "en",
+  "glossary_sha256": "52433c24e8c1a4bceb9ce80bfc4df53475c4cc7d646c1fd88be88f7db4ec7950",
+  "review_status": "machine-translated; structure checked; cross-chapter learning flow reviewed; live-execution and plain-English wording reviewed",
+  "units": {
+    "extension-08-00": {
+      "source_sha256": "fd348b0f88606fe2fb5e6556e9e129eeb2481b89706394cb793bb5b4c0290165",
+      "text": "# Chapter 8. Providing the Same Business Tool through MCP\n\nProvide the same target lookup through stdio MCP inside the sandbox.\n\n| Connection | This chapter |\n| --- | --- |\n| Shared example | Sales analysis of the same sales.csv |\n| New capability | MCP server connection, initialization, and actual call history |\n| Exercise composition | CSV analysis + stdio MCP target lookup + target/attainment response |\n"
+    },
+    "extension-08-01": {
+      "source_sha256": "521877e7f3e331b600c7a6ddb764f274863dd79b195f2c453a9398e41765ddb3",
+      "text": "<!-- colab-link -->\n[Standalone notebook download instructions](../../docs/colab.md) · For upload to Colab\n"
+    },
+    "f26953de0fd4": {
+      "source_sha256": "1f7da981209ab5cdc134ba44b2d30ba622db571da4ecd848f8a9130020ba30de",
+      "text": "## Learning Guide\n\n| Aspect | Chapter 7 Function Tool | This chapter's stdio MCP |\n| --- | --- | --- |\n| Target lookup location | Notebook Python application | Separate MCP process in the sandbox |\n| Tool registration | Function schema and local handler | Server execution and connection settings |\n| Call handling | SDK `tool_handlers` | Agents API MCP connection |\n| Target file location | Local JSON | JSON placed in the sandbox |\n\nThe notebook reads server code and constructs the request. The session environment's executor starts the actual server process. Do not start the server directly here or add `tool_handlers` or manual `tool_result` handling.\n\nRun manually from top to bottom, or validate automatically with `uv run --group dev python scripts/run_extensions.py --chapter 8 --live`. Distinguish server initialization, tool invocation, analysis completion, and reference validation.\n"
+    },
+    "90a09fcb": {
+      "source_sha256": "674df1ec90ceb36110c44b09cbafe4a54ab9dbfe68c2f65023c75d308ce0c6e7",
+      "text": "**Exercise guide:** Run each chapter independently in a fresh kernel. See the [shared learning and exercise guide](../../docs/validation.md) for execution modes, response/file differences, and validation records.\n"
+    },
+    "extension-08-02": {
+      "source_sha256": "2af8fd1e35d4e27453702ceb34fd3ee7e5c7e8507bf657dc0b8710c59d7036ca",
+      "text": "## 0. Environment Setup and Execution Modes\n\nLocally, run `uv sync --locked` and then select the `.venv` kernel. In Colab, upload the standalone notebook from the download instructions. The preparation cell installs packages directly and creates the included files.\nActual API calls and sandbox creation occur only when RUN_LIVE below is set to True.\nReuse the key and model from the existing `.env.local`, and do not put the key in the sandbox, ZIP files, or logs.\n"
+    },
+    "extension-08-05": {
+      "source_sha256": "58640a406c5d9af853df54d12dae85f8acfb073ebca6cc2ee1c9bd3a01c39c63",
+      "text": "## 1. Read the Server Code and Inspect Supplied Files\n\nRead the FastMCP server at `examples/mcp/sales_targets_server.py`. `@server.tool()` exposes the function, `--data` supplies its data path, and the final call uses stdio transport.\n\nThe next cell **only reads and displays** code and CSV input. It does not run the server in the notebook. Starting it directly can leave the cell waiting for stdio input. Reserve server stdout for protocol traffic; send ordinary logs to stderr.\n\nThis server validates period format and existence. Chapter 7's application role check does not automatically carry over to MCP.\n"
+    },
+    "4fe101e3": {
+      "source_sha256": "8f8ab4afa24d4918023d402ac0ce417c216efa196bbb2422ac8ff026831a63c8",
+      "text": "### Map Local Files to Sandbox Paths\n\n| Local file | Sandbox destination | Used by |\n| --- | --- | --- |\n| `data/sales.csv` | `/workspace/sales.csv` | Agent Python analysis |\n| `examples/mcp/sales_targets_server.py` | `/workspace/sales_targets_server.py` | MCP process arguments |\n| `data/sales_targets.json` | `/workspace/sales_targets.json` | Server's `--data` argument |\n\nThe target JSON is placed in the same sandbox. This configuration neither isolates it from agent code nor independently proves the origin of tool-derived data. It teaches integration using synthetic data. Internal credential handling and file isolation require separate design.\n"
+    },
+    "08-environment-guide": {
+      "source_sha256": "5409137ef655fee2f352173e3caac363d18c67d47cf941c9eb747345c6c63002",
+      "text": "## 2. Configure the Environment, MCP Connection, and Analysis Request\n\nFirst supply the three files and the remote `mcp` package. Local or Colab packages are separate from sandbox packages. Specify the requested remote version once through `MCP_VERSION`.\n\nThe current official guide says OpenAI-hosted stdio MCP requires an omitted or `enabled` network policy and does not support `disabled` or `restricted`. This example explicitly uses `enabled`. The stdio server opens no external HTTP port, but the environment's networking is not disabled. [Official MCP guide](https://developers.openai.com/api/docs/guides/agents-api/tools/mcp)\n\nThe next cell only constructs the request; it does not install packages or start the server.\n"
+    },
+    "extension-08-07": {
+      "source_sha256": "9867a53d0be7ebe6c361b1fae71cb39183ef913f432cc97ca2c542e217975275",
+      "text": "### Understand the MCP Connection Fields\n\n| Field | Role |\n| --- | --- |\n| `server_label` | Name identifying the connection in Agents API call history |\n| `command`, `args` | Program and arguments executed in the sandbox |\n| `cwd` | Existing absolute working directory for the server process |\n| `allowed_tools` | Tools allowed for discovery and invocation |\n| `required=True` | Fail the Turn when server initialization fails |\n\n`required=True` requires initialization; it does not require one tool invocation. Inspect the input message and stored history separately for call conditions. Omit the HTTP-origin setting `connection_origin` for stdio.\n\n`server_label` names the API connection and is distinct from the FastMCP server's own name. This exercise uses no external MCP credentials. [Official configuration guide](https://developers.openai.com/api/docs/guides/agents-api/tools/mcp)\n"
+    },
+    "08-contract-guide": {
+      "source_sha256": "02f86940fa540a2c5c169d6a7161b41028f0c0f99c418a1837c1bdadd1c5114c",
+      "text": "### Final Response and File Contracts\n\nCall the same business tool as Chapter 7 through a different connection. Store only base sales metrics in `summary.json`; return `metrics`, `target_revenue`, and `attainment_rate` in the final JSON. The report also presents the target and attainment.\n\nDefine the nested `metrics` structure separately from the final enriched response and compose both into the input. Request the MCP result rather than embedding the target value in the prompt.\n"
+    },
+    "08-execution-guide": {
+      "source_sha256": "f3604ea4a7b5ce128a1864a5542cf7e2519b733d18051ffbf36c5ad70701a423",
+      "text": "## 3. Initialize MCP and Run the Agent\n\nPass `agent` and `environment` in the session creation request to prepare the environment, initialize the MCP process, and analyze. The notebook creates no separate MCP client or local server process.\n\nServer initialization failure differs from a failed tool call after connection. Treat unexpected external actions as errors and detect failures and cancellation with `check_event()`. Do not assume fixed event counts or ordering, or treat `idle` alone as success.\n\nExecution and result stages attempt cleanup on errors and ordinary interrupts. In the normal path, **run the cleanup cell in Section 7**, including when you stop studying between steps. Forced kernel termination does not guarantee automatic cleanup.\n"
+    },
+    "m0a2c9d8c5add": {
+      "source_sha256": "ca20c44f56c696644d9824e7562ea2c7b8f12fb370e62d4ed9be1a6d21f0607e",
+      "text": "#### Enable Live API Execution\n\nSelect `RUN_LIVE=True` in the configuration cell, then run this preparation cell. With the default False setting, execution stops here with an error message. Subsequent API cells do not repeat the execution-enabled check. The `requires_api` tag is for the offline validator, not an access control mechanism in Jupyter itself.\n"
+    },
+    "m1d214edf1d37": {
+      "source_sha256": "185228d650be47860e9eaf7b2a09943ea066e70ab6b3b65d4df176d9239691a0",
+      "text": "### Prepare State for This Run\n\nKeep recovery records in `outputs/extensions/<chapter>/<run_id>/` and downloads under `downloads/<turn_id>/`. Run state preparation once at the start of a new run. Rerunning it during execution can discard resource identifiers.\n\nStart the timer immediately before API execution. The 600-second limit is checked when events arrive and cannot forcibly interrupt a silent stream. The HTTP timeout is 90 seconds.\n"
+    },
+    "ma85a18f956f7": {
+      "source_sha256": "5312cccd7e89b4889fbba408864f070e37fa3fed892a2f1c048b229ec6083c7f",
+      "text": "### Observe Session Creation and MCP Calls\n\nDisplay MCP Call Items' server and tool names while collecting streamed output. An arriving call Item does not establish success; inspect stored final status in the next section. This cell submits new work, so duplicate execution is blocked.\n\nRetrieve the root Turn after closing the stream context. Completion does not guarantee correctness of analysis values or tool results.\n"
+    },
+    "08-history-guide": {
+      "source_sha256": "bdf33c1a829e19a2bd82a9894bca3a20afd3d34be561442a01c95e49d3c42ad5",
+      "text": "## 4. Inspect Actual MCP Calls from This Turn\n\nIterate through SDK pages from `items.list()` and display only `mcp_call` Items belonging to this root Turn. Inspect server label, tool name, arguments, Item and Turn IDs, status, error, and output. Output belongs to this synthetic target lookup; this code does not display full HTTP error bodies or credentials.\n\nThe separate validator checks the intended server, exact tool name, requested period, completed status without error, and one call. This checks the prompt's conditions, not exactly-once behavior across failures or data isolation. Inspect call records separately from final calculations.\n\nIf a record shows failure or an error, do not treat it as a successful tool call. Clean up in Section 7, then diagnose the cause in Section 8.\n"
+    },
+    "08-download-guide": {
+      "source_sha256": "d2c9bda2b61d99a6f5853b9ee3146e4b0182c0f4d775c8229bc435cb0cada61b",
+      "text": "## 5. Download Files from the Exact Turn\n\nScope selection to the completed Session and Turn with `artifacts.for_result(result)` and download exact paths. The SDK rejects missing or duplicate matches. Inspect returned artifact metadata and local paths and sizes.\n\nMark completion only after both files arrive. Rerun downloads only before session cleanup. Errors trigger cleanup attempts, so retries in the same session are not guaranteed; do not treat partial files as success or automatically rerun the analysis.\n"
+    },
+    "08-results-guide": {
+      "source_sha256": "c9b0f43a8c0f1a0e029aec5e0e11cf16d96fce7c472e440c14c61dc13bae0780",
+      "text": "## 6. Read the Enriched Response, Base Summary, and Report\n\nDisplay the final response's `metrics` separately from the base `summary.json`. The final response also includes the target and attainment derived using MCP lookup. JSON fraction `0.85` corresponds to report percentage `85%`.\n\nThe normal path below reads local files and displays the report. JSON parsing and human inspection are separate from CSV, target, and report-reference checks by the validator. Downloaded files remain readable after session deletion.\n"
+    },
+    "extension-08-10": {
+      "source_sha256": "8717dba7bb55d351c9d15a130613ea2d528d9b3dbfe93d5f749f299e5d6c542e",
+      "text": "## 7. Clean Up the Session and Retain Local Results\n\nAfter downloading required files, clean up this run's session. Also execute cleanup if you stop studying between stages. Closing a stream is separate from session deletion and physical MCP process shutdown verification.\n\nThe helper identifies owned sessions using this run's metadata, cancels work if needed, then deletes and confirms API absence through retrieval returning `404`. Inspect `deleted` and `verified_absent`. This does not separately verify synchronous physical sandbox or MCP process teardown.\n\nPreserve original execution or validation errors while handling cleanup errors. The validator adds history and file-reference checks before deletion. Execution copies go to `outputs/extensions-validation/`, results and cleanup records to `outputs/extensions/`; manual Jupyter runs add no receipt. Local results and downloads remain.\n"
+    },
+    "extension-08-09": {
+      "source_sha256": "50123994aa5bbb9e6cc0d33b3dcf97e582a50e59c5abf42673d49abf4f80357a",
+      "text": "## 8. Diagnose Failures by Stage and Understand Operational Boundaries\n\n| Stage | What to inspect |\n| --- | --- |\n| Environment preparation | Remote packages, supplied files, and network configuration |\n| MCP initialization | Executable, server and data paths, and existing absolute cwd |\n| Tool call | Period arguments, server checks, and MCP Item status and error |\n| Analysis | Root Turn failure, cancellation, and final response |\n| Download | Exact Turn and path, missing artifacts, partial files, and cleanup results |\n\nInitialization failure of a `required=True` server appears as Turn failure. This notebook detects failure events and displays MCP Item status and errors, but calls no separate API to collect server stderr. When process logs are accessible in the execution environment, use them for further diagnosis. Do not report stderr validation without obtaining those logs.\n\nFor 401/403, check authentication and project access; for 429, check API limits. After forced termination, identify only this run using `outputs/extensions/<chapter>/<run_id>/creation.json` and the Session ID. Do not blindly repeat creation requests or print keys or raw API error bodies. See the [quickstart](../quickstart.ipynb) for recovery and Chapter 11 for caching and approval of tools with side effects.\n"
+    },
+    "08-http-reference": {
+      "source_sha256": "3c375719e53c474a4309f8129084a39f8385ecd7fe33a342fd016e90cac8969f",
+      "text": "### Additional Reference: HTTP and stdio Connection Locations\n\n| Connection | Access or execution location |\n| --- | --- |\n| HTTP / `service` | Server reachable from the OpenAI service network |\n| HTTP / `environment` | Server reachable from the selected execution environment |\n| stdio | Process started in the selected execution environment |\n\nThe notebook computer's localhost differs from the remote sandbox's localhost. The main exercise covers stdio only, without validating HTTP connections, internal authentication, or network routes. [Official connection guide](https://developers.openai.com/api/docs/guides/agents-api/tools/mcp)\n"
+    },
+    "08-next-chapter": {
+      "source_sha256": "3a2fdd36e170980b784a041ac1bf667f8b254347d7de2b22aaaf7d68ca3d25e3",
+      "text": "## Completion Criteria and the Next Chapter\n\nConnect the server code, supplied files, and process startup settings, and distinguish actual MCP call history, enriched responses, result files, and session cleanup state. Successful initialization and successful tool invocation are separate checks.\n\n[Chapter 9: Skills](09_skills.ipynb) packages analysis procedures and executable code into a reusable Skill.\n\n**Further reading:** Adding MCP target lookup to [Chapter 15: Multi-agent](15_multi_agent.ipynb) is a separate extension. Chapter 15 currently uses a target JSON file; combined MCP and Multi-agent execution is outside this basic run's validation scope.\n"
+    },
+    "refs-0b20caa1b6ba": {
+      "source_sha256": "e6097566726a95182a978f4c93c61ece7804e701ff9f6198214bdcb2bd7128c1",
+      "text": "## Official References\n\n### Agents API-Specific Documentation\n\n- [MCP connections](https://developers.openai.com/api/docs/guides/agents-api/tools/mcp) — MCP connection locations, stdio/HTTP, authentication, and tool access control.\n- [OpenAI-hosted sandboxes](https://developers.openai.com/api/docs/guides/agents-api/environments/openai-hosted) — packages, setup_commands, initial files, and network settings.\n\nLinks checked: 2026-11-03. Checking documentation links is separate from validating execution of the API exercises.\n"
+    }
+  }
+}

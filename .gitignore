@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+_build/
+.jupyter_cache/
+.DS_Store
+.env
+.env.*
+!.env.example
+outputs/
+
+# Derived private-package fixture; no credentials
+deploy/.generated/
+
+# Local project work records
+/.work/

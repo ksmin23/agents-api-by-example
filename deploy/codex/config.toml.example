@@ -1,0 +1,8 @@
+# Only for native local Codex telemetry. Does not configure the managed API harness.
+[otel]
+environment = "tutorial-local"
+log_user_prompt = false
+
+[otel.exporter.otlp-http]
+endpoint = "http://collector:4318/v1/logs"
+protocol = "json"

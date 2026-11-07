@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "source": "notebooks/chapters/15_multi_agent.ipynb",
+  "language": "en",
+  "glossary_sha256": "52433c24e8c1a4bceb9ce80bfc4df53475c4cc7d646c1fd88be88f7db4ec7950",
+  "review_status": "machine-translated; structure checked; cross-chapter learning flow reviewed; live-execution and plain-English wording reviewed",
+  "units": {
+    "multi-agent-15-00": {
+      "source_sha256": "b4ef39c4863b32e92d09d87c359149dae6275ae953b13d46b6905edd14bed575",
+      "text": "# Chapter 15. Distributing Sales Analysis Across Multiple Agents and Consolidating Reports\n\nHave two workers analyze CSV and target JSON, then integrate their results through the coordinator.\n\n| Connection | This chapter |\n| --- | --- |\n| Shared example | Sales analysis of the same sales.csv |\n| New capability | Subagent delegation, worker histories, and shared-result integration |\n| Exercise composition | OpenAI-hosted + direct target JSON input + two workers |\n"
+    },
+    "multi-agent-15-01": {
+      "source_sha256": "521877e7f3e331b600c7a6ddb764f274863dd79b195f2c453a9398e41765ddb3",
+      "text": "<!-- colab-link -->\n[Standalone notebook download instructions](../../docs/colab.md) · For upload to Colab\n"
+    },
+    "multi-agent-15-02": {
+      "source_sha256": "e8fc8f8d743ea79b62f0b192e93fee5e7730770392ab57bbd7c870650f334378",
+      "text": "## Learning Guide\n\nPrerequisites: Chapter 3, Sessions and Turns; Chapter 5, files and artifacts. Chapter 9, Skills, and Chapter 11, approvals, are optional extensions. Run in an OpenAI-hosted environment without Docker or an executor key.\n\n1. Enable delegation with `agent.multi_agent`.\n2. Assign sales breakdown analysis and target attainment analysis to separate subagents.\n3. Have the main Agent read both files and write a consolidated report.\n4. Inspect the subagents' creation events, stored commands, and Turns.\n5. Download the files and clean up the Session.\n\nSubagents have independent contexts but share the environment's filesystem. The Harness provides tools for creation, messaging, waiting, and interruption. This exercise does not create two separate Sessions in Python or implement handoffs with the Agents SDK.\n\n### Comparison with a Single Agent\n\n| Approach | Behavior in this example | When to choose it |\n| --- | --- | --- |\n| Single Agent | Performs sales and target analysis sequentially | Short or interdependent steps |\n| Multi-agent | Performs two analyses independently, then consolidates them through the main Agent | Separable analysis and review tasks |\n\nA single Agent is sufficient for a small CSV. Rather than measuring speed or cost improvements, this exercise teaches delegation configuration, execution history for each assigned role, and consolidation of shared files. Separating tasks and specifying clear deliverables are recommended in the [official documentation](https://developers.openai.com/api/docs/guides/agents-api/multi-agent).\n"
+    },
+    "multi-agent-15-03": {
+      "source_sha256": "674df1ec90ceb36110c44b09cbafe4a54ab9dbfe68c2f65023c75d308ce0c6e7",
+      "text": "**Exercise guide:** Run each chapter independently in a fresh kernel. See the [shared learning and exercise guide](../../docs/validation.md) for execution modes, response/file differences, and validation records.\n"
+    },
+    "multi-agent-15-04": {
+      "source_sha256": "528d14fe02eb038712f9d3dc1fd4d8d8b8d8290187501bb3a83fa4b4697f3de6",
+      "text": "## 0. Prepare the Environment\n\nFor local use, run `uv sync --locked` and then use the `.venv` kernel. In Colab, upload the standalone notebook. Live API use requires your existing project's API key and model settings, along with `RUN_LIVE=True`."
+    },
+    "multi-agent-15-07": {
+      "source_sha256": "d323dab034d218f8ec222e8e4d82bd4e50c6999746603d5e2f7dc15f8250e2f0",
+      "text": "## 1. Separate Roles and Output Files\n\n| Role | Task | Dedicated output |\n| --- | --- | --- |\n| Sales structure | Calculate product/date revenue, row count, and quantity | sales_breakdown.json |\n| Target assessment | Compare actual revenue with the selected period target and calculate attainment/shortfall | target_assessment.json |\n| Coordinator | Read both worker results and combine them | summary.json, report.md |\n\nEach worker reads the inputs and writes only its own output. The coordinator does not perform the worker tasks. Keep inputs unchanged and use distinct output files and scripts. This small CSV does not guarantee a speedup; the goal is role separation and API usage.\n"
+    },
+    "multi-agent-15-09": {
+      "source_sha256": "9232dad55ead8ce82fbcddce7977f360c8a4d6f79259e0c297267246236dc223",
+      "text": "## 2. Enable Multi-agent and Streaming\n\n`enabled=True` enables the delegation tools. `max_concurrent_subagents=2` is the concurrency limit excluding the main Agent; it does not guarantee that both tasks will run simultaneously. Request exactly two analysts in the input, then confirm this through the actual creation and execution history.\n\nFor Session events, print only the IDs of the two subagents. Do not print all events or collect custom Traces. Completion of creation and wait calls is not the same as completion of an analyst's analysis, so also inspect the stored Turns and files.\n\nAPI settings enable delegation tools and set the concurrency limit; prompts request two worker roles; execution history shows what actually happened. Dedicated output paths are work conventions, not access-control isolation.\n"
+    },
+    "multi-agent-15-10": {
+      "source_sha256": "5dde71f34b88f688744c3104d70c73a8ed9863923bc9ffb012a5933c287eb7dd",
+      "text": "### Enable Live API Execution\n\nSelect `RUN_LIVE=True` in the configuration cell, then start execution from this cell. Subsequent API cells do not repeat the live-execution check."
+    },
+    "multi-agent-15-13": {
+      "source_sha256": "60d57c5b13d2cbe25ca70089136df3661439b064e5df202961422385750929b0",
+      "text": "## 3. From Delegation to Inspecting the Integrated Results\n\n| Step | Your action | Expected output |\n| --- | --- | --- |\n| 1. Run delegation | Wait for the execution cell to finish | Session and subagent creation IDs |\n| 2. Inspect worker state | Compare root and child Turns | Original root Turn and worker statuses |\n| 3. Inspect role commands | Connect roles, agents, and Turns | Script, actor, and exit code |\n| 4. Download four files | Inspect publication and storage paths | Artifact ID, publishing Turn, remote/local paths |\n| 5. Read worker results and report | Compare both analyses with integration | Three JSON files and the report body |\n| 6. Clean up | Run the last cell even if stopping midway | Session deletion and confirmed absence |\n\nRun the state preparation cell below once with a fresh client. Reinitializing midway loses ownership and identifiers. Each step attempts cleanup on errors, so check cleanup and start from preparation after an error rather than continue the old run. Successful cells leave the Session available for the next step. Forced kernel termination cannot guarantee cleanup.\n\n### Core APIs and Query Scope\n\n| API | What it shows |\n| --- | --- |\n| `sessions.create` + `agent.multi_agent` | Create a Session and enable Harness delegation tools |\n| `sessions.subagents.list` | Subagents created in this Session |\n| `subagents.turns.list` | Worker Turn completion and failure states |\n| `subagents.items.list` | Worker commands and execution history |\n| `subagents.turns.retrieve` | Retrieve a child Turn with session_id, subagent_id, and turn_id |\n| `sessions.turns.retrieve` | Retrieve a root Turn; its subagent_id is null |\n| `sessions.artifacts.list` / `.content` | Query and download results published in the shared environment |\n\nIterate SDK list responses to read all pages. limit is a page size, not an overall result cap. Detailed evidence and expected-result checks run in a separate execution copy; the basic lesson adds no custom Trace.\n"
+    },
+    "multi-agent-15-15": {
+      "source_sha256": "b0cad1e7d3b612aab84d188b811858a8c87bd027f91cb993c8eaee1429a11a1c",
+      "text": "### 5. Read Worker Results and the Integrated Report\n\nFirst read metrics and by_date in sales_breakdown.json, then the period, target, attainment, and shortfall in target_assessment.json. Check that both workers and summary.json agree on revenue before displaying report.md. This checks consistency among results; it does not calculate expected results from the CSV or compare against them, as the validation runner does.\n\nLocal files remain after Session deletion. The Session is still available at this step; run step 6 after inspecting the results.\n"
+    },
+    "multi-agent-15-17": {
+      "source_sha256": "2b8711e31e2f417db132aa834783cfb5007422a0aca5088617a55b79f0d5826d",
+      "text": "## Completion Criteria and Failure Handling\n\nInspect completed Turns and successful role-specific Python commands from two different workers, the root integration command, both worker JSON files, and the integrated report. Compare creation events with saved subagents. Correct files or a model's completion claim alone do not establish successful delegation. An author string in worker JSON is not execution evidence either.\n\n| Situation | Next action |\n| --- | --- |\n| Worker failed/cancelled or result missing | Do not treat integration as successful; inspect history and cleanup state |\n| Missing/duplicate file or interrupted download | Do not fabricate results; inspect the path and publishing Turn |\n| Stream interruption or timeout | Investigate persisted Session state before resubmitting any work |\n| Stop studying midway | Run step 6; after forced termination, inspect this run's resources in creation.json |\n\nHelpers may already have cleaned up after an error; do not continue recovery queries with a closed client. [Chapter 14: Observer Recovery](14_operations.ipynb) explains querying the same Session and avoiding resubmission. This chapter does not implement automatic resumption or exactly-once execution across failures.\n\nManual execution uses step outputs. Only the validation script adds expected-result comparisons, history checks before Session deletion, and failure/cleanup receipts to an execution copy. Forced termination cannot guarantee a receipt or cleanup.\n\nLocal command: uv run --group dev python scripts/run_multi_agent.py --live. Omit --live to validate only preparation cells without API calls. The execution copy is outputs/extensions-validation/15_multi_agent.executed.ipynb; downloads and validation records are saved under outputs/extensions/15_multi_agent/.\n"
+    },
+    "multi-agent-15-18": {
+      "source_sha256": "ef611f94f7c81c6822d92c8e4462b230d49dff1e5e505094d50448e65edc4d88",
+      "text": "## Optional Extensions and Observation Scope\n\n- You can extend analysis capabilities and target lookup with a Skill from Chapter 9 or MCP from Chapter 8. The basic exercise uses only JSON files.\n- Subagents can use MCP and the environment's commands and files, but according to the official documentation, Function Tools are not supported. Do not apply Chapter 7's function handlers directly to subagents.\n- Apply Chapter 11's validation and approvals to the report consolidated by the main Agent.\n- For deeper execution investigation, use Chapter 13's basic Trace inspection workflow. Do not assume that streaming items provide a complete record of conversations between Agents.\n\nThe basic exercise uses a target JSON file and Python scripts written by the agents during execution. Combinations of MCP, Skills, and approvals are optional extension ideas and are not included in the actual execution validation scope. Record the actual execution scope of the API, Docker, and Trace export separately; this chapter can run without Trace export."
+    },
+    "multi-agent-15-19": {
+      "source_sha256": "f1e070d70ecaf48ba339b3ae40bb1508eea33af168727b1b26c7d3c7001a4ad7",
+      "text": "## Official References\n\n### Agents API-Specific Documentation\n\n- [Multi-agent](https://developers.openai.com/api/docs/guides/agents-api/multi-agent) — Configuration, shared environment, and execution history for each assigned role.\n- [Files and artifacts](https://developers.openai.com/api/docs/guides/agents-api/environments/files) — Input placement and result downloads.\n- [Events and items](https://developers.openai.com/api/docs/guides/agents-api/sessions/events) — Streaming, stored results, and recovery.\n- [Observability](https://developers.openai.com/api/docs/guides/agents-api/observability) — Observing root and subagent execution.\n\nSee [Exercise Guide](../../docs/validation.md) for execution modes and validation scope. Offline checks and actual API execution validation are distinct.\n"
+    },
+    "15-environment-guide": {
+      "source_sha256": "073fafbf0242700eeba57869e9617f4b3120e536dbee0fb209a4d5ddb4942108",
+      "text": "### Prepare the Shared Environment Request\n\nSend the actual bytes of both input files. The printed target and currency are business inputs, not computed answers. Changing PERIOD also changes the analysis period in the prompt.\n"
+    },
+    "15-step-1-guide": {
+      "source_sha256": "9932e1a5ec660af562714130b93e94fec59cb5530e1ac1f90975b79d5c3a0475",
+      "text": "### 1. Run Delegation\n\nOnly this cell creates a new Session and its initial input. Created subagent IDs are not role names, and event order does not define role order. Step 3 connects roles through executed scripts. Workers may still be running during quiet periods.\n\nThe 900-second budget starts in this cell and is checked when events arrive. Together with HTTP timeout=90, it is not a strict overall deadline. A timeout does not establish remote failure; this tutorial attempts cleanup on errors.\n"
+    },
+    "15-step-2-guide": {
+      "source_sha256": "1f0c678ea3570c2cf8dfe29c85adcf5304215d75e77705a10096300036b5d86a",
+      "text": "### 2. Inspect Root and Worker State\n\nRetrieve the root through sessions.turns and children through subagents.turns. A completed coordinator still requires checking worker outcomes. Creation events are clues to compare with the saved list, not evidence of completed analysis. Print each worker Turn ID, status, and owner; failed or cancelled Turns are not treated as successful work.\n"
+    },
+    "15-step-3-guide": {
+      "source_sha256": "4a8c6d309ee00c1376c2920c33ba4be3880082a625baf7e81c4f4ea4daa961d0",
+      "text": "### 3. Connect Role Scripts to Their Execution Actors\n\nMap roles by executed script path rather than creation order. Inspect the separate python script commands requested by this lesson. An echo or code-writing command that merely mentions a script is not displayed as execution. This is not a general auditor for arbitrary shell wrappers or complex pipelines.\n\nRetrieve each command's child Turn directly to check its ID, owner, and completed status; confirm that different workers performed the two roles. Also display successful root Python commands. The execution-copy validator checks integration evidence and calculated answers separately.\n"
+    },
+    "15-step-4-guide": {
+      "source_sha256": "47a8def97a93d46b8eb6c28d282c2914ae022125fe563069af0d0b6b5d183cbf",
+      "text": "### 4. Download Four Results from the Shared Environment\n\nArtifacts are publication records. Worker files may be published in different Turns, so do not restrict selection to the root Turn. Select exact paths within the completed Turns queried for this run; report missing or duplicate candidates with the file name. A publishing Turn alone does not prove authorship; read it alongside step 3 command history.\n\nInspect each Artifact ID, publishing Turn, and remote/local path. report_downloaded becomes True only after all four downloads complete. A download failure applies error cleanup; partial local files do not establish success.\n"
+    },
+    "15-step-6-guide": {
+      "source_sha256": "d75686020d3babea7335a533b4db49fcbc15ffcceb7278c128e579d7e064b8b4",
+      "text": "### 6. Clean Up and Summarize\n\nRun this cell even if stopping midway. For active work, the cleanup helper attempts cancellation before deleting the Session and confirming absence. Cleanup also closes the client; do not continue querying with that client. Preserve any original execution or validation error and attach cleanup errors as additional information. Downloaded files remain locally.\n"
+    }
+  }
+}

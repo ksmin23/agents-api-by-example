@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "source": "notebooks/chapters/03_sessions.ipynb",
+  "language": "en",
+  "glossary_sha256": "52433c24e8c1a4bceb9ce80bfc4df53475c4cc7d646c1fd88be88f7db4ec7950",
+  "review_status": "machine-translated; structure checked; cross-chapter learning flow reviewed; live-execution and plain-English wording reviewed",
+  "units": {
+    "intro-03-00": {
+      "source_sha256": "b7fd515a59dca98527c4f9be25e3754009d8892edcd003c7783ebf92607f017c",
+      "text": "# Chapter 3. Continuing Conversations and Managing Execution State\n\nContinue overall and daily sales analysis within the same Session.\n\n| Connection | This chapter |\n| --- | --- |\n| Shared example | Sales analysis of the same sales.csv |\n| New capability | Same Session, distinct Turns, and persisted history |\n| Exercise composition | Two requests in a fresh Session · message input |\n"
+    },
+    "intro-03-01": {
+      "source_sha256": "521877e7f3e331b600c7a6ddb764f274863dd79b195f2c453a9398e41765ddb3",
+      "text": "<!-- colab-link -->\n[Standalone notebook download instructions](../../docs/colab.md) · For upload to Colab\n"
+    },
+    "49601293817a": {
+      "source_sha256": "a79a77ad10a47a726935752d0d8104f84308c992b98959517e583daa9d00927b",
+      "text": "## Learning Guide\n\nExtend Chapter 2's basic flow by **sending follow-up input to the same Session**.\n\n| Stage | API or value used directly | What to inspect |\n| --- | --- | --- |\n| First analysis | `sessions.create()` | Total-sales JSON and first Turn completion |\n| Follow-up analysis | `sessions.stream(session_id, input=...)` | Daily-sales JSON calculated from the existing file |\n| Continuity and history | Session and Turn IDs, `turns.list()`, `items.list()` | One Session, distinct Turns, and stored work |\n| Cleanup | Deletion and retrieval in the cleanup helper | Absence of the created session in the API |\n\nInspect live text and stored history directly; this chapter does not upload or download files. Run the cells below from top to bottom for the manual exercise. For automated validation, run `uv run --group dev python scripts/run_intro.py --chapter 3 --live`.\n"
+    },
+    "a6de3a39": {
+      "source_sha256": "674df1ec90ceb36110c44b09cbafe4a54ab9dbfe68c2f65023c75d308ce0c6e7",
+      "text": "**Exercise guide:** Run each chapter independently in a fresh kernel. See the [shared learning and exercise guide](../../docs/validation.md) for execution modes, response/file differences, and validation records.\n"
+    },
+    "intro-03-02": {
+      "source_sha256": "8614865f0253bfa34027e523b47c9591f8193ca8c03ad814723f9ea66cee2865",
+      "text": "## 0. Exercise Setup and Execution Modes\n\nLocally, run `uv sync --locked` and `uv run jupyter lab` from the repository root, then select the `.venv` kernel.\nIn Colab, upload the standalone notebook from the download instructions. The setup cell installs the packages directly and generates the included code and data.\nExplicitly enable the live API exercise with **RUN_LIVE=True**.\nThe key is read from `.env.local` or Colab Secrets and is not printed. Live execution incurs costs.\n"
+    },
+    "intro-03-05": {
+      "source_sha256": "b16da8621085e153c7375231e328abf6e64358ace479aef632acf652e6851305",
+      "text": "## 1. One Session, Two Requests\n\n| Aspect | First request | Follow-up request |\n| --- | --- | --- |\n| API | `sessions.create()` | `sessions.stream(session_id, input=...)` |\n| Input | Raw CSV and total-sales instructions | Instructions to calculate daily sales from the existing file |\n| Session | Create a new one | Use the first Session |\n| Turn | First task | New task |\n| File | Save as `/workspace/sales.csv` | Read the same file |\n\nThis example reuses both conversation context and a file in the same environment. The follow-up explicitly names the existing file path without resending the CSV. This does not mean files are automatically shared with a new session.\n\nFirst display the local CSV. This step does not call the API or run an analysis.\n"
+    },
+    "2f47a6b7": {
+      "source_sha256": "bc442218446f4ac1f01b97f0e6969db8b4cfa46e28f3f282ffc241776108d8de",
+      "text": "### Prepare Both Inputs\n\nSet the Agent instructions and environment when creating the first session, then supply only new input for the follow-up. The first input uses `METRICS_CONTRACT` to specify the final JSON format. The follow-up requests daily revenue and the highest-revenue date. Defining these values does not call the API.\n"
+    },
+    "intro-03-07": {
+      "source_sha256": "1da4b9923eeb0699c06e38d0cb75a5f9dd9ebe57a3604b29df62dabc38135aa1",
+      "text": "## 2. Run the First Analysis and Confirm Completion\n\nInspect the total-sales result from the first Turn before sending follow-up input. Input sent while work is still running can steer that Turn, so this exercise confirms completion before continuing.\n\nDisplay text deltas while collecting the final response with `with_result_collection()`. Confirm completion in both the result from `get_final_result()` and the root Turn from `turns.retrieve()`, then display the analysis JSON. Successful JSON parsing and calculation correctness are separate checks.\n\nOpen and close each stream in its own cell. Closing a stream neither cancels work nor deletes the session. In the normal path, **run the cleanup cell in Section 5**, including when you stop studying between cells. Each stage uses `cleanup_on_error()` to attempt cleanup on errors and ordinary interrupts. Cleanup is not guaranteed after forced kernel termination.\n"
+    },
+    "mee05a055a848": {
+      "source_sha256": "ca20c44f56c696644d9824e7562ea2c7b8f12fb370e62d4ed9be1a6d21f0607e",
+      "text": "#### Enable Live API Execution\n\nSelect `RUN_LIVE=True` in the configuration cell, then run this setup cell. With the default False setting, execution stops here with an error message. Subsequent API cells do not repeat the execution-enabled check. The `requires_api` tag is for the offline validator, not an access control mechanism in Jupyter itself.\n"
+    },
+    "m12707f9deaeb": {
+      "source_sha256": "7c10e88d1e9af2526cbd86c299daa4aa3cc7453b46ac94c99ccdaaa2d318121a",
+      "text": "### Prepare State for This Run\n\n`output_dir` is a local path for recovery records such as `creation.json`. Run state preparation once when starting a new run. Rerunning it during execution can discard the Session ID and submission-attempt records.\n\nCreate the follow-up `message_key` once here. Reuse the key when retrying the same logical message; use a new key for a new message. This example does not automate retries and records whether follow-up submission was attempted to prevent duplicates on cell rerun.\n\nStart each Turn's timer immediately before submission. The 600-second limit is checked when events arrive and cannot forcibly interrupt a silent stream. The HTTP timeout is 90 seconds.\n"
+    },
+    "m9d3dfc63efc4": {
+      "source_sha256": "eecbe2235fa677df5eb4ebd929f51e695efd10007d80bb2d7b2c0690bbb6c7ce",
+      "text": "### Run the First Analysis\n\nRecord the session on `agent.session.created` and display text deltas. Treat unexpected external actions as errors and detect failures and cancellation with `check_event()`. Do not assume fixed event counts or ordering, or treat `idle` alone as success.\n\nThis cell creates a session, so do not rerun it to duplicate work. Inspect the Session ID, first Turn ID, completion status, and total-sales JSON before continuing.\n"
+    },
+    "03-follow-up-guide": {
+      "source_sha256": "9bb6e063dd24025e58b7c59132011b5188e322feba80d6a2312649888c13055a",
+      "text": "## 3. Send Follow-up Input to the Same Session\n\nThe first Turn has completed, so send new input to `first.session_id`. `sessions.stream()` connects the event subscription before submitting input. Prevent other clients from submitting input to the same session while this helper runs.\n\nDo not resend the CSV, Agent, or environment settings. Ask for daily revenue from the existing `/workspace/sales.csv`; this cell starts a new Turn. Inspect the second Turn ID and daily-sales JSON.\n\nAfter an error, inspect cleanup results and saved IDs first. Creating a new key and repeatedly running the follow-up cell is not a recovery procedure. This example attempts session cleanup on errors, so inspect the state and prepare a new exercise after a failure.\n"
+    },
+    "intro-03-09": {
+      "source_sha256": "b2959918059306a1ddc8eb6a28aa853786116126525aaedc1773c3b8d77f2d09",
+      "text": "## 4. Inspect Conversation Continuity and Stored History\n\nCheck directly that both results have the same Session ID and different Turn IDs. This establishes conversation continuity, not calculation correctness.\n\n| Object | Purpose in this chapter |\n| --- | --- |\n| Event | Observe changes during execution |\n| Turn | Inspect the status of work started by input |\n| Item | Retrieve stored work, including command execution |\n\nThe SDK iteration below reads across pages; do not assume one page contains all results. Display Turn IDs and status, and Item types and associated Turn IDs, rather than full objects. Also confirm that both request Turns appear in the stored list.\n\nA stream does not replay missed events. [Chapter 14: Observer Reconnection](14_operations.ipynb) shows how to inspect the same Turn's stored results without resubmitting input.\n"
+    },
+    "intro-03-10": {
+      "source_sha256": "667424216b7ea0162a030931d4c8543d9e332e7293d3d0e027dfd23bd8273e10",
+      "text": "## 5. Delete the Session and Confirm Cleanup\n\nBoth results and history are held in local variables, so clean up the session. This cell does not rerun either analysis. Also run it if you stop studying between steps.\n\n| Operation | Meaning |\n| --- | --- |\n| Close a stream | Close observation; separate from cancelling work or deleting a session |\n| Cancel work | Request interruption of active work; separate from deleting a session |\n| Delete a session | Remove the session so it cannot be used for subsequent server queries |\n\n`cleanup_resources()` uses this run's metadata to find sessions even if a creation response was lost. It cancels work if needed, then deletes and retrieves to confirm API absence. Inspect `deleted` and `verified_absent` in the output. This does not mean physical sandbox cleanup has completed synchronously.\n\nPreserve the original error if cleanup also fails. The validation tool adds command and reference checks before deletion and still attempts cleanup on failure. Local `first`, `second`, and history remain readable after deletion.\n"
+    },
+    "intro-03-12": {
+      "source_sha256": "0e420f1c970cf72c37f536a3faabe58b508ed912745936863a1a2d715a4cf36d",
+      "text": "## 6. Expected Results, Failure Actions, and the Next Chapter\n\nFor manual inspection, compare total revenue of 127500 in the first analysis, daily revenue of 2026-01-01=65000, 01-02=25000, 01-03=37500, and the highest-revenue date of 2026-01-01. These reference values are not included in API input. The separate validator checks calculation correctness and successful Python commands.\n\n- Both results share a Session ID and have distinct Turn IDs. Both the first and follow-up Turns must appear in stored history.\n- For 401/403, check authentication and project access; for 429, check API limits. Do not print keys or raw error bodies.\n- After disconnection, inspect cleanup results and saved IDs rather than unconditionally resubmitting input. Use `outputs/intro/<chapter>/<run_id>/creation.json` for recovery after forced termination. If you used the validator, also inspect the local `summary.json`. See what to do after failure or interruption in the [quickstart](../quickstart.ipynb).\n\n**Optional reference — cancellation:** `sessions.events.create(session_id, events=[{\"type\":\"agent.session.input.cancel\"}])` requests cancellation of active work. The main exercise completes both Turns and cleans up the session, without running an additional cancellation exercise.\n\nThis chapter reused conversation context and files within the same Session. [Chapter 4](04_agent_configuration.ipynb) shows how to reuse Agent settings while keeping each Session's conversation and workspace independent.\n"
+    },
+    "refs-97827e84410d": {
+      "source_sha256": "abc4ac554a1195c59b55c0c0bc5ee7b283a4f13a5fdfba6bbb573b23676bba66",
+      "text": "## Official References\n\n### Agents API-Specific Documentation\n\n- [Run and continue sessions](https://developers.openai.com/api/docs/guides/agents-api/sessions) — Follow-up Turns, input deduplication, cancellation, and retrieval of stored tasks.\n- [Events and items](https://developers.openai.com/api/docs/guides/agents-api/sessions/events) — Event streams, completion states, and retrieval of stored items and turns.\n- [Manage sessions](https://developers.openai.com/api/docs/guides/agents-api/sessions/manage) — Checking the current state and pending actions, and deleting Sessions.\n\nLinks checked: 2026-11-03. Checking documentation links is separate from validating execution of the API exercise.\n"
+    }
+  }
+}

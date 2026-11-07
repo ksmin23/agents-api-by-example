@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "source": "docs/extensions/function-tool-actions.md",
+  "language": "en",
+  "glossary_sha256": "52433c24e8c1a4bceb9ce80bfc4df53475c4cc7d646c1fd88be88f7db4ec7950",
+  "review_status": "machine-translated; structure checked; editorial review recommended",
+  "units": {
+    "document": {
+      "source_sha256": "1e21bcec6073aae35d0a28694fa136ae4bf879f719d5e58af4a475bec8b2d785",
+      "text": "# Direct Function Tool Responses: Advanced Material\n\nThe basic implementation in [Chapter 7](../../notebooks/chapters/07_function_tools.ipynb) uses the official `function_tool()` and `tool_handlers`. Python functions can be called directly, and the SDK adapter validates arguments and serializes return values. Do not apply `json.dumps()` again to SDK return values that have already been serialized.\n\n## Handling a pending action directly\n\nDo not apply both automatic `tool_handlers` and the direct handling below to the same call. Use `turn_id` and `call_id` from the current pending action.\n\n```python\nfor action in event.session.required_actions:\n    if action.type != \"function_call\" or action.name != \"get_sales_target\":\n        raise RuntimeError(\"Unsupported action\")\n    # sales_target_tool validates the argument dict and returns serialized output.\n    output = sales_target_tool(action.arguments)\n    client.beta.agents.sessions.events.create(\n        event.session.id,\n        events=[{\n            \"type\": \"agent.session.input.tool_result\",\n            \"turn_id\": action.turn_id,\n            \"call_id\": action.call_id,\n            \"success\": True,\n            \"output\": output,\n        }],\n    )\n```\n\nPlace the code above in the `agent.session.requires_action` branch of the event loop. Return argument or permission violations using a safe error code and `success=False`, without sending the original exception body.\n\nFor functions with side effects, store results per session/turn/call, and do not execute the same call again if it is redelivered. If execution is interrupted after the function runs but before the result is stored, check the result in the business system. Traces alone cannot resolve duplicate execution issues. The [Chapter 11 implementation](../../notebooks/chapters/11_guardrails_approvals.ipynb) demonstrates direct handling, including caching and approval.\n\n[Official Functions](https://developers.openai.com/api/docs/guides/agents-api/tools/functions)\n"
+    }
+  }
+}

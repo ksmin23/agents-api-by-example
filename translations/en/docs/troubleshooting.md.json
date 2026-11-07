@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "source": "docs/troubleshooting.md",
+  "language": "en",
+  "glossary_sha256": "52433c24e8c1a4bceb9ce80bfc4df53475c4cc7d646c1fd88be88f7db4ec7950",
+  "review_status": "English wording reviewed against updated standalone Colab troubleshooting guidance",
+  "units": {
+    "document": {
+      "source_sha256": "a67284afea5751bead00dbd1696388f7fcb308331c9a9aed51b354e2a4601f0e",
+      "text": "# Troubleshooting\n\n| Symptom | Items to check |\n| --- | --- |\n| Package not found in the notebook | `uv sync --locked` and `.venv` kernel selection |\n| Book CLI does not run | Node.js 22 LTS installation and docs dependency synchronization |\n| Colab notebook or ZIP download link is missing or does not open | Providers: rebuild the deployment artifacts and check that each language's download files are included. Learners: upload the supplied file following the [standalone Colab guide](colab.md). GitHub access is not required. |\n| Colab package installation fails | Check the installation cell's error and access to public PyPI. No requirements file is downloaded from GitHub. If import errors persist after installation, restart the runtime and rerun from the preparation cells. |\n| Helper, data, or example files are missing in Colab | Use the standalone notebook and run the bundled-file preparation cells in order. Do not edit generated files directly; ask the provider for an updated notebook. |\n| CI fails after dependency changes | Update uv.lock, then regenerate standalone notebooks with build_colab.py |\n| Broken paths on Pages | BASE_URL, repository name, and Pages source settings |\n| uv reports an outdated lockfile | Check index environment settings such as UV_DEFAULT_INDEX. Compare with an explicit public index using `uv sync --locked --default-index https://pypi.org/simple`, and keep that index on subsequent uv run commands. Do not print credentials. |\n| SOCKS proxy socksio ImportError | Use `uv run --group proxy jupyter lab` only when SOCKS is required. Preserve company proxy policy instead of installing SOCKS packages for every learner. |\n| Optional packages missing for Chapter 13 or a book build | Use `uv run --group telemetry jupyter lab` for in-memory observation, `uv run --group telemetry-otlp jupyter lab` for a Collector, or `uv run --group docs python scripts/build_artifacts.py --target sites` for builds. |\n| Cannot run a chapter's API features | Validation scope documentation, API access permissions, and SDK support |\n\nPassing this repository's offline checks does not validate Agents API access permissions or live behavior.\nRecord documentation build results separately from actual API validation results.\n"
+    }
+  }
+}

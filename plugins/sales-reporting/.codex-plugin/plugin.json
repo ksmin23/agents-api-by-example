@@ -1,0 +1,7 @@
+{
+  "name": "sales-reporting",
+  "version": "1.0.0",
+  "description": "Analyze a sales CSV with a reusable report skill and compare it with a fictional monthly target through MCP.",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
+}

@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "source": "myst.yml",
+  "language": "en",
+  "glossary_sha256": "52433c24e8c1a4bceb9ce80bfc4df53475c4cc7d646c1fd88be88f7db4ec7950",
+  "review_status": "machine-translated; structure checked; editorial review recommended",
+  "units": {
+    "text-c83783d90fe526e5": {
+      "source_sha256": "c83783d90fe526e570b932e42b95cc1de90900574bccb6025f05385769701e8a",
+      "text": "Agents API Hands-on Guide"
+    },
+    "text-7b3989ec66cd35a5": {
+      "source_sha256": "7b3989ec66cd35a5eb819ad877be280d5a228a2a096338eddbaf1f64e3ac43b3",
+      "text": "Start with a CSV analysis and reporting example, then work through tool connections, Skills and Plugins, approvals, and internal deployment."
+    },
+    "text-8779a905898386e4": {
+      "source_sha256": "8779a905898386e47543f08ac2017bd772c2467a28a5eca68315bfc8b970ee75",
+      "text": "Getting Started"
+    },
+    "text-a4447ae9354527de": {
+      "source_sha256": "a4447ae9354527de11ba4e1387bd11ecdf512aa2b95572d3285a8a5005bb233e",
+      "text": "Fundamentals"
+    },
+    "text-db11098fc16785d6": {
+      "source_sha256": "db11098fc16785d6928d85243ebd68f50c465ffe21557c92f82f798045594723",
+      "text": "Extending Functionality"
+    },
+    "text-e32c446d4756fc0e": {
+      "source_sha256": "e32c446d4756fc0ed61c8b69bcc4b63affd2afc0b949c1ca22c4da54c4b96c58",
+      "text": "Internal Deployment and Operations"
+    },
+    "text-9d810ffe5abc7401": {
+      "source_sha256": "9d810ffe5abc7401cf7a983c1b799531fb982d0d3449e0eda5d33da33d1c92b6",
+      "text": "Comprehensive Multi-agent Lab"
+    },
+    "text-0c6869a03ea96d9f": {
+      "source_sha256": "0c6869a03ea96d9f98eedd12299cf08d7089e7552d600011d4a4fca5ed907759",
+      "text": "Supplementary Resources"
+    },
+    "text-f4fbcaf371011902": {
+      "source_sha256": "f4fbcaf37101190281ed645ff50378f1aefc23a53c32684333092b8cc6a0e35b",
+      "text": "Lab Help"
+    }
+  }
+}

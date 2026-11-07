@@ -1,0 +1,44 @@
+name: Validate tutorial
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+env:
+  UV_DEFAULT_INDEX: https://pypi.org/simple
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: '0.11.17'
+          enable-cache: true
+      - name: Check public installation prerequisites
+        run: python3 scripts/check_tutorial.py --require-public
+      - name: Check translation catalogs
+        run: python3 scripts/localization.py
+      - run: uv sync --locked --group dev --group docs
+      - run: uv lock --check
+      - run: uv run --no-sync python scripts/configure_repository.py --check
+      - name: Build publication artifacts
+        run: uv run --no-sync python scripts/build_artifacts.py --target sites
+      - name: Check publication manifest
+        run: uv run --no-sync python scripts/check_artifacts.py --target sites
+      - run: uv run --no-sync python -m unittest discover -s tests -v
+      - run: uv run --no-sync python scripts/check_notebooks.py --execute
+      - run: uv run --no-sync python scripts/check_colab.py --execute --language all
+      - name: Check clean public-PyPI installations
+        run: uv run --no-sync python scripts/check_installation.py
+      - name: Upload standalone Colab notebooks
+        uses: actions/upload-artifact@v4
+        with:
+          name: colab-notebooks
+          path: _build/colab/
+          if-no-files-found: error
+          retention-days: 30

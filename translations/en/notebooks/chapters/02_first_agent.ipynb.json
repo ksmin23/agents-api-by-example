@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "source": "notebooks/chapters/02_first_agent.ipynb",
+  "language": "en",
+  "glossary_sha256": "52433c24e8c1a4bceb9ce80bfc4df53475c4cc7d646c1fd88be88f7db4ec7950",
+  "review_status": "machine-translated; structure checked; cross-chapter learning flow reviewed; live-execution and plain-English wording reviewed",
+  "units": {
+    "intro-02-00": {
+      "source_sha256": "0abb0098c62e79d50ef3b6b8822eded53860b19ed1fda1ae2538bd9266a3f07a",
+      "text": "# Chapter 2. Running a CSV Analysis Agent\n\nSend CSV in a message and receive analysis JSON.\n\n| Connection | This chapter |\n| --- | --- |\n| Shared example | Sales analysis of the same sales.csv |\n| New capability | Create a Session, stream events, and inspect completed state and response |\n| Exercise composition | OpenAI-hosted · standard library · message input |\n"
+    },
+    "intro-02-01": {
+      "source_sha256": "521877e7f3e331b600c7a6ddb764f274863dd79b195f2c453a9398e41765ddb3",
+      "text": "<!-- colab-link -->\n[Standalone notebook download instructions](../../docs/colab.md) · For upload to Colab\n"
+    },
+    "b4ddc1cce2b0": {
+      "source_sha256": "7589fa8272b0fed32a59f954a64936377a7d0f278dde8458f93f230737eb918d",
+      "text": "## Learning Guide\n\nConnect the Agent, Session, Turn, and Environment concepts from Chapter 1 to a real request. If you completed the quickstart, apply the same API flow to CSV analysis.\n\n| Stage | API or value used directly | What to inspect |\n| --- | --- | --- |\n| Build the request | Agent instructions, environment, input message | Who performs the task, where, and what to do |\n| Execute | `sessions.create()`, `stream=True` | Session creation event and text output |\n| Inspect results | `get_final_result()`, `turns.retrieve()` | Completion status and analysis JSON |\n| Clean up | Deletion and retrieval in the cleanup helper | Absence of the created session in the API |\n\nThis chapter embeds a small CSV in a message and receives **text JSON**, without uploading files. Chapter 5 covers file uploads and report downloads.\n\nFor a manual exercise, run the cells below from top to bottom. For automated validation, run `uv run --group dev python scripts/run_intro.py --chapter 2 --live`.\n"
+    },
+    "9b0e46ac": {
+      "source_sha256": "674df1ec90ceb36110c44b09cbafe4a54ab9dbfe68c2f65023c75d308ce0c6e7",
+      "text": "**Exercise guide:** Run each chapter independently in a fresh kernel. See the [shared learning and exercise guide](../../docs/validation.md) for execution modes, response/file differences, and validation records.\n"
+    },
+    "intro-02-02": {
+      "source_sha256": "8614865f0253bfa34027e523b47c9591f8193ca8c03ad814723f9ea66cee2865",
+      "text": "## 0. Exercise Setup and Execution Mode\n\nLocally, run `uv sync --locked` and `uv run jupyter lab` from the repository root, then select the `.venv` kernel.\nIn Colab, upload the standalone notebook provided in the download instructions. The preparation cell installs packages directly and generates the included code and data.\nExplicitly allow live API exercises with **RUN_LIVE=True**.\nThe key is read from `.env.local` or Colab Secrets and is not printed. Live execution incurs costs.\n"
+    },
+    "intro-02-05": {
+      "source_sha256": "d2d5a1396cc38a4a986fa3dc486d270c87ec64ee3ec28fd941c5ac74581c6b06",
+      "text": "## 1. Inspect the Input CSV\n\nEach row is a transaction with a date, product, quantity, and unit price. Send the raw data and calculation rules to the agent, without precalculated answers. The output below only displays a local file; it does not call the API or run an analysis.\n"
+    },
+    "02a8089e": {
+      "source_sha256": "bbfea35deedfa3158de52645ccf6c680445ede6bb7522e901a962f5dfc972deb",
+      "text": "## 2. Configure Agent Instructions, Environment, and Input\n\n- Agent instructions require Python calculations and prohibit inventing transactions.\n- The input message specifies CSV storage, analysis, and the final JSON format. Compose it with `METRICS_CONTRACT` to define the output format in one place.\n- Execution uses an `openai_hosted` sandbox. `network.access=\"disabled\"` disables external network access from the sandbox. It is separate from the local client's connection to the OpenAI API.\n\nThis example uses only the standard library, so it needs no package installation. Pass the `agent` configuration directly in the session creation request without creating a separate saved Agent.\n"
+    },
+    "intro-02-07": {
+      "source_sha256": "fe73ce6c826b2558d5205be092c66469653b4713e28304ab1b84f4056a4626cc",
+      "text": "## 3. Create a Session and Stream the Response\n\nActual requests become possible from the API preparation cell below. The execution and result-inspection cells use `cleanup_on_error()` to attempt cleanup on errors and ordinary interrupts. After normal completion, **run the cleanup cell in Section 5**. Also run it if you stop studying between steps.\n\nOpen and close the stream context in one cell. Closing a stream leaves the session available, so result inspection and session deletion are separate learning steps. Cleanup may not run if the kernel or process is forcibly terminated.\n"
+    },
+    "m8901e8c926d2": {
+      "source_sha256": "ca20c44f56c696644d9824e7562ea2c7b8f12fb370e62d4ed9be1a6d21f0607e",
+      "text": "#### Enable Live API Execution\n\nSelect `RUN_LIVE=True` in the configuration cell, then run this preparation cell. With the default False setting, execution stops here with an error message. Subsequent API cells do not repeat the execution check. The `requires_api` tag is for the offline validator and is not an access control mechanism in Jupyter itself.\n"
+    },
+    "m14a197856f53": {
+      "source_sha256": "2727956e0ada388100b524778d5fb12468a84128dac98c4ce65abbafd7b7addb",
+      "text": "### Prepare State for This Run\n\n`output_dir` is a local path for recovery records such as `creation.json`, rather than downloaded reports. Unique metadata and the Session ID from events identify only this run's session. Run the state-preparation cell once at the start. Rerunning it during inspection or cleanup can discard resource identifiers.\n"
+    },
+    "ma6d83c02d4be": {
+      "source_sha256": "7318df3b3fa634b218d7ca13fbd27846fefdac96a2f3f0c7bc5cb611bfeb3cab",
+      "text": "### What to Observe in the Stream\n\n| Event or handler | Action in this cell |\n| --- | --- |\n| `agent.session.created` | Immediately retain and display the Session ID |\n| `agent.session.turn.output_text.delta` | Display text as it arrives |\n| `agent.session.requires_action` | Treat an external action request as unexpected in this exercise |\n| `check_event()` | Detect session, environment, or root Turn failures and cancellation in other events |\n\n`with_result_collection()` collects the final response while you observe events. After the loop, obtain the result with `get_final_result()`. Do not assume fixed event counts or ordering. Neither `idle` nor a closed connection alone proves task success.\n\nThe timer starts immediately before API execution. The 600-second limit is **checked when events arrive**; it cannot forcibly interrupt a silent stream. The client HTTP timeout is 90 seconds. Use Jupyter's interrupt to stop execution and inspect the cleanup result.\n\nThe next cell submits the task. A second submission within the same run state is rejected to prevent duplicate work on rerun. Seeing text output does not yet establish calculation correctness.\n"
+    },
+    "intro-02-09": {
+      "source_sha256": "dcf855b49101d0a0b5bc38016ed7b7f9769b5f193e46c5a33aa2f3be1d5bc87f",
+      "text": "## 4. Inspect Completion and Analysis Results\n\nRead the collected `result.output_text` as JSON and query the stored root Turn with `turns.retrieve()`. This cell does not submit a new task.\n\n| Check | What it establishes |\n| --- | --- |\n| `completed` in both the collected result and retrieved Turn | Whether the task ended in a completed state |\n| Displayed analysis JSON | The returned row count, quantity, and revenue |\n| Command and reference comparisons in the separate validator | Successful Python execution and calculation correctness |\n\nSuccessful `json.loads()` checks JSON syntax, not field types or calculation correctness. `get_final_result()` does not turn failures or cancellation into success. Distinguish the display below from a recorded pass by the separate validation tool.\n"
+    },
+    "intro-02-10": {
+      "source_sha256": "7fdfb7e878e24592f8a8beb669b1544165a316bf93bc7d913d1012cbcb47beb0",
+      "text": "## 5. Delete the Session and Confirm Cleanup\n\nThe results are now held in local variables, so clean up the session. This cell does not rerun the analysis. Also run it if you stop studying between steps.\n\n`cleanup_resources()` uses this run's unique metadata to find sessions even when a creation response was lost. It attempts cancellation for active work, then deletion, retries conflicts a limited number of times, and confirms API absence through a retrieval returning `404`. This does not mean physical sandbox cleanup has completed synchronously. This chapter creates no separate saved Agent, so the Agent collection is empty.\n\nCheck that both `deleted` and `verified_absent` are true in the output. Cleanup errors raise an error instead of reporting success. The validation tool adds checks before deletion; it still attempts cleanup on a check failure and preserves the original error.\n\nThe result object and `actual` remain readable locally after deletion. The deleted session cannot be used for further server queries.\n"
+    },
+    "intro-02-12": {
+      "source_sha256": "3df7e2c97175f1fd2dfdff67553612deffffd62027afd43745629e02ec80400c",
+      "text": "## 6. Expected Results, Failure Actions, and the Next Chapter\n\nIn the manual exercise, inspect the output JSON for 6 rows, a quantity of 11, total revenue of 127500, and product revenue A=30000, B=75000, C=22500. These values are reference points for the reader and are not included in the API input. The separate validator checks command exit codes as well as calculated values.\n\n| Situation | Action |\n| --- | --- |\n| Preparation error with `RUN_LIVE=False` | To make actual calls, edit and rerun the configuration cell. Use the runner for offline validation |\n| 401/403 | Check authentication and project access |\n| 429 | Check API limits |\n| Disconnection or interrupted execution | Inspect cleanup results. If cleanup failed, inspect saved IDs and state before recovery |\n| Forcibly terminated kernel or process | Identify only this run using `outputs/intro/<chapter>/<run_id>/creation.json` and the Session ID |\n\nDo not print keys or raw error bodies. Do not unconditionally resubmit the same input in a new session after a disconnection. See what to do after failure or interruption in the [quickstart](../quickstart.ipynb). If you used the validation tool, also inspect the local `summary.json`.\n\nThis chapter's session has been cleaned up and is not reused in Chapter 3. **[Chapter 3](03_sessions.ipynb) creates a new session and sends follow-up input within it** to extend the analysis to daily revenue.\n"
+    },
+    "refs-1fc6bb1cf175": {
+      "source_sha256": "aed5d7ef3a3e7db168a1de1521217b02edaeba11ce2631243b92a72089e1b3a5",
+      "text": "## Official References\n\n### Agents API Documentation\n\n- [Agents API quickstart](https://developers.openai.com/api/docs/guides/agents-api/quickstart) — Session creation, streaming, result inspection, and resource cleanup.\n- [Events and items](https://developers.openai.com/api/docs/guides/agents-api/sessions/events) — Event streams, completion status, and retrieval of stored items and turns.\n\nLinks checked: 2026-11-03. Checking documentation links is separate from validating execution of the API exercises.\n"
+    }
+  }
+}

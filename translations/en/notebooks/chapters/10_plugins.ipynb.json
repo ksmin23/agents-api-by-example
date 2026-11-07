@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "source": "notebooks/chapters/10_plugins.ipynb",
+  "language": "en",
+  "glossary_sha256": "52433c24e8c1a4bceb9ce80bfc4df53475c4cc7d646c1fd88be88f7db4ec7950",
+  "review_status": "machine-translated; structure checked; cross-chapter learning flow reviewed; live-execution and plain-English wording reviewed",
+  "units": {
+    "extension-10-00": {
+      "source_sha256": "d52b858deb5642a390212d398e6e7d3e1dde811555cfd742efbc585558600065",
+      "text": "# Chapter 10. Packaging Skills and MCP with Plugins\n\nPackage Chapter 8’s target MCP and Chapter 9’s analysis Skill as a Plugin.\n\n| Connection | This chapter |\n| --- | --- |\n| Shared example | Sales analysis of the same sales.csv |\n| New capability | Plugin ZIP, registration, and evidence of using both capabilities |\n| Exercise composition | Analysis Skill + target MCP + target-comparison report |\n"
+    },
+    "extension-10-01": {
+      "source_sha256": "521877e7f3e331b600c7a6ddb764f274863dd79b195f2c453a9398e41765ddb3",
+      "text": "<!-- colab-link -->\n[Standalone notebook download instructions](../../docs/colab.md) · For uploading to Colab\n"
+    },
+    "18ca61d28541": {
+      "source_sha256": "8c15b8a898736c15de093bc47603775d095f9f95acd9565f948963ef89b5919e",
+      "text": "## Learning Guide\n\n| Chapter | Supplied configuration | Connection to this chapter |\n| --- | --- | --- |\n| Chapter 8 | MCP tool connection | Sales-target lookup |\n| Chapter 9 | Skill ZIP | Analysis procedures, references, and code |\n| Chapter 10 | Plugin ZIP | A single package for the Skill and MCP configuration |\n\nSupply both capabilities through `environment.plugins` alone. Do not register the same MCP again in `agent.tools` or attach the same Skill in `environment.skills`. A Plugin packages capabilities together rather than introducing a new analysis algorithm.\n\nRun manually from top to bottom, or validate automatically with `uv run --group dev python scripts/run_extensions.py --chapter 10 --live`. The request explicitly selects the Plugin and Skill, so it does not evaluate automatic selection.\n"
+    },
+    "c6cf456a": {
+      "source_sha256": "674df1ec90ceb36110c44b09cbafe4a54ab9dbfe68c2f65023c75d308ce0c6e7",
+      "text": "**Exercise guide:** Run each chapter independently in a fresh kernel. See the [shared learning and exercise guide](../../docs/validation.md) for execution modes, response/file differences, and validation records.\n"
+    },
+    "extension-10-02": {
+      "source_sha256": "2af8fd1e35d4e27453702ceb34fd3ee7e5c7e8507bf657dc0b8710c59d7036ca",
+      "text": "## 0. Environment Setup and Execution Modes\n\nLocally, run `uv sync --locked`, then select the `.venv` kernel. In Colab, upload the standalone notebook from the download instructions. The preparation cell installs packages directly and creates the included files.\nActual API calls and sandbox creation occur only when RUN_LIVE below is set to True.\nReuse the key and model from the existing `.env.local`, and do not put the key in the sandbox, ZIP, or logs.\n"
+    },
+    "extension-10-05": {
+      "source_sha256": "647a742440376608ca9f0b62da8d8bfd04186e99297507735a24c01e8e9d933c",
+      "text": "## 1. Inspect Plugin Contents and File Relationships\n\n```text\nsales-reporting/\n├── .codex-plugin/plugin.json\n├── .mcp.json\n├── skills/csv-report/\n│   ├── SKILL.md\n│   ├── references/report-schema.md\n│   └── scripts/analyze_sales.py\n├── servers/sales_targets_server.py\n└── assets/sales_targets.json\n```\n\n| File or setting | Role |\n| --- | --- |\n| `.codex-plugin/plugin.json` | Declare the Plugin name, description, local version, and Skill/MCP paths |\n| `.mcp.json` | Configure the stdio server command, args, and cwd |\n| Skill directory | CSV analysis instructions, contract, and code |\n| Server and target JSON | MCP server and fictional sales-target data |\n\nThe next cell reads input and key files without running the Skill or MCP server locally. Server stdout carries MCP messages; send diagnostics to stderr. Preparation does not modify Plugin sources.\n"
+    },
+    "10-paths-guide": {
+      "source_sha256": "248460b3142b33605a3c754edbd36b6641b98cfaa40330ae7181165c08b992bf",
+      "text": "### Plugin-Relative Paths and Dependencies\n\nThe manifest's `skills` and `mcpServers` point to the associated directories or files. In this Plugin's `.mcp.json`, `cwd=\".\"` means the Plugin root. Resolve `servers/sales_targets_server.py` and `assets/sales_targets.json` from that root rather than hardcoding the installed absolute path.\n\nPlugin MCP configuration differs from the MCP request schema in `agent.tools`; do not copy Chapter 8's fields directly. The remote executor starts the server process. Do not add `tool_handlers` or submit tool_result manually.\n\nThe ZIP contains code, configuration, and fictional data. Install the MCP Python package separately through `environment.packages`. Hosted stdio MCP requires the network policy to be omitted or enabled, so keep it enabled here; this requirement is not explained solely by package downloads. [Official Plugin guide](https://developers.openai.com/api/docs/guides/agents-api/tools/plugins#authenticate-mcp-servers)\n"
+    },
+    "10-bundle-guide": {
+      "source_sha256": "5a5ac3b3d6b6751c8a293b453ca2fb3fd9808496329af3f28731d1ddbf408e70",
+      "text": "## 2. Prepare the ZIP and Inline Plugin Request\n\nBuild a ZIP with one top-level `sales-reporting/` directory. Read request name and description from the manifest so they match. Entries, size, and SHA-256 identify the local bundle rather than proving remote execution. The manifest version is also a local declaration; do not assume registration returns a version or code hash.\n\n`archive_folder()` only packages files. Exclude virtual environments, installed packages, and API keys. After changing Skill, server, or data copies, explicitly run `scripts/sync_plugin_sources.py` and review the diff rather than synchronizing during notebook execution. `scripts/build_bundles.py` checks source-copy consistency and generates `_build/bundles/`.\n"
+    },
+    "10-task-guide": {
+      "source_sha256": "8beefb2c2e2c9072f887cf891f489b8ed8646bdd5de849a6b1b1e343cb1b83f5",
+      "text": "### Prepare the Analysis Request and Output Contracts\n\nPrepare the task outside the execution cell. The bundled Skill script creates base metrics and three files, MCP retrieves a fictional target, and the agent appends the target comparison to the report. Keep these responsibilities distinct.\n\n| Output | Format |\n| --- | --- |\n| `summary.json` | Base metrics only |\n| Final response | Enriched JSON with metrics, target_revenue, and attainment_rate |\n| `report.md` | Base report plus target revenue and percentage attainment |\n| `skill_evidence.json` | Skill name, revision marker, and input-byte hash |\n\nJSON attainment_rate is a fraction, while the report multiplies it by 100 for a percentage. A fraction can exceed 1 when revenue exceeds the target. Request two appended lines in an explicit, verifiable format.\n"
+    },
+    "extension-10-07": {
+      "source_sha256": "1c433fc874e4144021018e5cce0573066dfd61a1d93be06428088685eb4bb096",
+      "text": "## 3. Execute Analysis with the Attached Plugin\n\nPass the prepared environment and task to `sessions.create()`. Registration, package installation, MCP startup, and Skill execution happen remotely; earlier cells only read and package local files. After modifying the Plugin, start a new run with a new session rather than assuming automatic reload.\n\nExecution and inspection stages use `cleanup_on_error()` to attempt cleanup on errors and ordinary interrupts. In the normal path, **continue through cleanup in Section 8**. Clean up when stopping between stages as well; forced kernel termination does not guarantee automatic cleanup.\n"
+    },
+    "mc5cb9d8edc84": {
+      "source_sha256": "ca20c44f56c696644d9824e7562ea2c7b8f12fb370e62d4ed9be1a6d21f0607e",
+      "text": "#### Enable Live API Execution\n\nSelect `RUN_LIVE=True` in the configuration cell, then run this preparation cell. With the default False setting, execution stops here with an error message. Subsequent API cells do not repeat the execution-mode conditional. The `requires_api` tag is for the offline validator, not an access control mechanism in Jupyter itself.\n"
+    },
+    "m185557c63c04": {
+      "source_sha256": "5a183f0b23bc8230cf5f0342eb7ca9463ead01a75aaa92a9240fa95787a9f5ef",
+      "text": "### Prepare State for This Run\n\nKeep recovery records in `outputs/extensions/<chapter>/<run_id>/` and downloads under `downloads/<turn_id>/`. Initialize state once at the start of a new run. Reinitializing during execution can discard resource identifiers.\n\nStart the timer immediately before execution to exclude study time between cells. The 600-second limit is checked when events arrive and cannot forcibly interrupt a silent stream. The HTTP timeout is 90 seconds.\n"
+    },
+    "m0ee4ab69979a": {
+      "source_sha256": "e77c388012c35b2f73c090aba5a84246a170221a1a3470536aa45876ec93bd30",
+      "text": "### Create the Session and Stream the Response\n\nDisplay text deltas and collect the final response, then retrieve the root Turn after closing the stream. Block duplicate submission of new work. Detect failures and cancellation and treat unexpected external actions as errors.\n\nTurn completion, a model's Skill mention, and successful JSON parsing do not establish actual Skill use. Inspect registration and commands separately in the next two sections. Do not assume fixed event counts or ordering, or treat `idle` alone as success.\n"
+    },
+    "10-registration-guide": {
+      "source_sha256": "4c612eae3926e63e4e680c5c73bdf39bb65b8228f7303d05dcffa6c0ec015350",
+      "text": "## 4. Inspect Plugin Registration in This Environment\n\nCall `environments.retrieve()` with the Session's Environment ID. If the event did not provide an ID, recover it by retrieving the Session. Check the environment ID and Plugin name/inline type; print only name, type, and description.\n\nThis response is registration metadata, not proof of archive contents, manifest version, MCP invocation, or Skill execution. Do not assume a Plugin's internal Skill must also appear in a separate skills list. Inspect actual activity next.\n"
+    },
+    "10-history-guide": {
+      "source_sha256": "40db0086d3f478f3642687a772f459c3dad405b68e6f45b80587bf94bc409526",
+      "text": "## 5. Inspect MCP Calls and Skill Execution Separately\n\nIterate SDK pages from `items.list()` and display MCP calls and commands from this root Turn separately. Inspect MCP arguments, status, error, and output. For Python commands, inspect script path, input/output arguments, cwd, status, and exit code. None does not mean exit code 0. Reading a file differs from executing the script.\n\nThe MCP configuration key is sales_targets, while the code's FastMCP name is sales-targets. Display the observed runtime server_label without guessing a fixed Plugin namespace format. Metadata alone is not independent proof of call provenance. The validator checks the root Turn's exact tool name, period, one call, completed status, no error, and an explicit Python CLI with the requested arguments. Correct calculations or Turn completion do not make a failed call pass.\n\nUse the Items API for these basic checks and Trace only when additional investigation is needed. This notebook does not collect remote MCP stderr or analyze arbitrary shell programs.\n"
+    },
+    "10-download-guide": {
+      "source_sha256": "3c1715c55613e4419e4b2b4d7801340be6cb51bab548dc80fc5b92de146f4ff0",
+      "text": "## 6. Download All Three Output Files\n\nScope selection to the completed Session and Turn with `artifacts.for_result(result)`. Download exact paths and display the remote artifacts and local paths and sizes. The SDK rejects missing or duplicate matches.\n\nMark completion only after all three files arrive. Rerun only before session cleanup. Error handling attempts cleanup, so retries in the same session are not guaranteed; do not treat partial files as success or automatically rerun analysis.\n"
+    },
+    "10-results-guide": {
+      "source_sha256": "4bc072030a6f870e5764989d1f47c8c91110b6f8a1912352bb46f877b11de52b",
+      "text": "## 7. Read Base Metrics and the Target Comparison\n\nRead enriched final JSON alongside the base summary.json. Final metrics should match the base summary, the target comes from the MCP response, and JSON attainment is a fraction. In the report, inspect the appended target revenue and percentage with two decimal places. In the normal path, the next cell displays local results without another API call.\n\nThe input SHA-256 in skill_evidence identifies the actual CSV bytes sent, while script_revision is a marker defined in code. ZIP hashes, revision strings, and registration metadata do not guarantee tamper resistance or independent proof of execution. Reference checks for calculations, appended report lines, and hashes run only in validation copies before deletion.\n\nThe target JSON is in the same environment, so this exercise does not establish access isolation for target data. Distinguish actual MCP calls from correct calculations.\n"
+    },
+    "extension-10-10": {
+      "source_sha256": "776d19abb94db224b05374e96141f4eba6deafa380211d2865141fde1593413a",
+      "text": "## 8. Clean Up the Session and Retain Local Results\n\nDownload the three files before cleanup. The helper identifies sessions owned by this run's unique metadata, cancels if needed, deletes, and confirms API absence through retrieval returning 404. Inspect deleted and verified_absent. This is not an independent check of physical MCP-process termination or synchronous sandbox cleanup.\n\nError cleanup and the final finally preserve the original execution/validation error. Validation tools inspect history and files before deletion and attempt cleanup even on validation failure. Normal cleanup closes the client; do not continue API inspection on the old session. Local Plugin sources, ZIP bytes, downloads, and result objects remain.\n\nThis example creates neither a separate permanent Plugin installation resource nor a saved Agent. Session-supplied inline Plugins differ from installing or monitoring a user's Codex Desktop Plugins. Manual Jupyter execution adds no receipt. Execution copies are in outputs/extensions-validation/ and result/cleanup records in outputs/extensions/.\n"
+    },
+    "extension-10-09": {
+      "source_sha256": "1ff826dc99475544f7dac815acf1d3d3a9f8d886473450f68e8b2afdc066d6c9",
+      "text": "## 9. Failure Actions and the Next Chapter\n\n| Stage | What to inspect |\n| --- | --- |\n| Bundle | Manifest paths, one top-level directory, and synchronized source copies |\n| Environment and registration | Package installation, network policy, Environment ID, Plugin name and type |\n| MCP | Server cwd/args, tool arguments, call status and error |\n| Skill | Bundled script path, CLI arguments, exit code, and input hash |\n| Results | Three files, final JSON versus summary, appended target/percentage, and cleanup |\n\nDo not treat failures or partial downloads as success. Clean up and investigate without automatic resubmission. Error cleanup may close the client/session, so retries within the same run are not guaranteed. Do not print keys or raw API error bodies. For forced-termination recovery, use metadata in `creation.json` and the Session ID; see the [quickstart](../quickstart.ipynb).\n\nComplete the chapter when you can explain registration versus actual use of both capabilities, fractions versus percentages, and API cleanup versus local retention. [Chapter 11: Approvals](11_guardrails_approvals.ipynb) adds user decisions before publication and call-result caching. Chapter 10 only retrieves a target and writes a report; it does not publish externally. Keep self-hosted registration and environment-template reuse as optional extensions in the official documentation.\n"
+    },
+    "refs-8599ef4cbd84": {
+      "source_sha256": "c3b5eef9953f0936d634409f883f18becf43baa433e582e9e7641ebb05c36d7e",
+      "text": "## Official References\n\n### Agents API–Specific Documentation\n\n- [Plugins](https://developers.openai.com/api/docs/guides/agents-api/tools/plugins) — Manifests, Skill/MCP packaging, hosted ZIPs, and self-hosted registration.\n- [MCP connections](https://developers.openai.com/api/docs/guides/agents-api/tools/mcp) — MCP connection placement, stdio/HTTP, authentication, and tool access control.\n\nLinks checked: 2026-11-03. Checking documentation links is separate from validating execution of the API exercise.\n"
+    }
+  }
+}

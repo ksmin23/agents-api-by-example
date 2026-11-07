@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "source": "notebooks/chapters/09_skills.ipynb",
+  "language": "en",
+  "glossary_sha256": "52433c24e8c1a4bceb9ce80bfc4df53475c4cc7d646c1fd88be88f7db4ec7950",
+  "review_status": "machine-translated; structure checked; cross-chapter learning flow reviewed; live-execution and plain-English wording reviewed",
+  "units": {
+    "extension-09-00": {
+      "source_sha256": "24087f133a4feee9ae73520353d0b6fb608fdb3d2e0419edaed4f775f90f57cf",
+      "text": "# Chapter 9. Reusing Analysis Procedures and Code with Skills\n\nReuse the base CSV analysis procedure and code as a Skill.\n\n| Connection | This chapter |\n| --- | --- |\n| Shared example | Sales analysis of the same sales.csv |\n| New capability | Skill ZIP, registration, and actual bundled-script execution |\n| Exercise composition | CSV analysis Skill + base report + skill_evidence.json |\n"
+    },
+    "extension-09-01": {
+      "source_sha256": "521877e7f3e331b600c7a6ddb764f274863dd79b195f2c453a9398e41765ddb3",
+      "text": "<!-- colab-link -->\n[Standalone notebook download instructions](../../docs/colab.md) · For upload to Colab\n"
+    },
+    "4f1e750c611b": {
+      "source_sha256": "0ab7a8ec594820ea18a1724039c49769722216930f69ae4a1d65177d288912c9",
+      "text": "## Learning Guide\n\n| Component | What it reuses | Example in this tutorial |\n| --- | --- | --- |\n| Function Tool or MCP | Callable business functionality | Sales-target lookup |\n| Skill | Procedures, references, and executable code | CSV analysis and report generation |\n\nA Skill packages task instructions that can work with other tools. This chapter explicitly requests `csv-report` and its bundled script. It does not evaluate automatic Skill selection from natural-language requests alone.\n\nRegistration differs from actual use. After execution, inspect registration metadata, commands from the same Turn, and downloaded outputs separately. Also distinguish these from the default image's full Skill inventory.\n\nRun manually from top to bottom, or validate automatically with `uv run --group dev python scripts/run_extensions.py --chapter 9 --live`.\n"
+    },
+    "755a14e0": {
+      "source_sha256": "674df1ec90ceb36110c44b09cbafe4a54ab9dbfe68c2f65023c75d308ce0c6e7",
+      "text": "**Exercise guide:** Run each chapter independently in a fresh kernel. See the [shared learning and exercise guide](../../docs/validation.md) for execution modes, response/file differences, and validation records.\n"
+    },
+    "extension-09-02": {
+      "source_sha256": "2af8fd1e35d4e27453702ceb34fd3ee7e5c7e8507bf657dc0b8710c59d7036ca",
+      "text": "## 0. Environment Setup and Execution Mode\n\nLocally, run `uv sync --locked` and then select the `.venv` kernel. In Colab, upload the standalone notebook from the download instructions. The preparation cell installs packages directly and creates the included files.\nActual API calls and sandbox creation occur only when RUN_LIVE below is changed to True.\nReuse the key and model from the existing `.env.local`, and do not put the key in the sandbox, ZIP, or logs.\n"
+    },
+    "extension-09-05": {
+      "source_sha256": "2112a12f7ba4edad84d1d4ae2da368f6fe7aa48aaa1bdc00cf114494434cf389",
+      "text": "## 1. Inspect Skill Contents and Input\n\n```text\ncsv-report/\n├── SKILL.md\n├── references/\n│   └── report-schema.md\n└── scripts/\n    └── analyze_sales.py\n```\n\n| File | Role |\n| --- | --- |\n| `SKILL.md` | Explain when and how to use the Skill |\n| `references/report-schema.md` | Input and output contract |\n| `scripts/analyze_sales.py` | Deterministic aggregation and three output files |\n\nThe next cell reads and displays input, manifest, contract, and script. It neither runs the analyzer locally nor calls the API. Inspect input reading, aggregation, and generation of JSON, report, and evidence files.\n"
+    },
+    "c3cafeec": {
+      "source_sha256": "2202a0a8c4dfe50dfcc106e569f1fe5e940ad7fe93dbee1e9c64b2c00eb0ad3f",
+      "text": "## 2. Build the ZIP and Inline Skill Request\n\nRead the Skill name and description, then build the ZIP. `read_skill_metadata()` is a boilerplate helper for this example's unquoted, single-line name and description fields, not a general YAML parser. Reject complex front matter with a clear error. Keep API request schemas visible in the following cell.\n\nThe ZIP has one top-level `csv-report/` directory containing the manifest, references, and code. Do not include an entire execution environment or virtual environment. `archive_folder()` only packages files. ZIP entries, byte count, and SHA-256 identify the local bundle, not successful remote execution.\n"
+    },
+    "09-inline-guide": {
+      "source_sha256": "a1185567f4eb0f24568f0a17e4accc86ee0adf212fbfb3950033e2bd9e06032e",
+      "text": "### Map ZIP Bytes to API Fields\n\n| Field | Contents |\n| --- | --- |\n| `name`, `description` | Name and description read from the manifest |\n| `source.type` | Standard base64 encoding |\n| `source.media_type` | ZIP format |\n| `source.data` | Encoded ZIP bytes |\n| `environment.skills` | Skills supplied to this environment |\n\nThis chapter attaches an inline ZIP in the session request. It neither creates a separate Skills API upload resource nor selects a saved Skill version. The official environment guide introduces skills, plugins, and capability directories together; distinguish them from this request form. [Environment guide](https://developers.openai.com/api/docs/guides/agents-api/environments/openai-hosted#add-skills-and-plugins)\n"
+    },
+    "extension-09-07": {
+      "source_sha256": "3e4c776bdeb4504ab74c9b875ba3f425d223463c5eb4c885b93518ee94d261d4",
+      "text": "### Separate the Execution Request from Dependencies\n\nThis Skill uses only the standard library, so it needs no remote package installation. Prepare external dependencies separately when needed, as in Chapter 6; do not bundle a virtual environment.\n\nDo not hardcode the installed Skill's absolute path. Ask the agent to read the instructions, locate the bundled script from that directory, and run it with explicit `--input` and `--output-dir` arguments. Request reuse of the analyzer rather than rewriting it, and compose `METRICS_CONTRACT` into the actual input.\n"
+    },
+    "09-execution-guide": {
+      "source_sha256": "38ad4056f1d3b651ea02e3e11e8df042595b23cfd6e0087cf92db5e3f4a76f43",
+      "text": "## 3. Execute Analysis with the Attached Skill\n\nPass the prepared environment to `sessions.create()` to start a new analysis. Inline Skill installation, environment preparation, and script execution occur remotely; preparation cells did not run local analysis.\n\nExecution and result stages use `cleanup_on_error()` to attempt cleanup on errors and ordinary interrupts. In the normal path, **run the cleanup cell in Section 8**, including when you stop studying between stages. Forced kernel termination does not guarantee automatic cleanup.\n"
+    },
+    "m46708af9595d": {
+      "source_sha256": "ca20c44f56c696644d9824e7562ea2c7b8f12fb370e62d4ed9be1a6d21f0607e",
+      "text": "#### Enable Live API Execution\n\nSelect `RUN_LIVE=True` in the configuration cell, then run this preparation cell. With the default False setting, execution stops here with an error message. Subsequent API cells do not repeat the execution-mode check. The `requires_api` tag is for the offline validator; it is not access control enforced by Jupyter itself.\n"
+    },
+    "md97cb0658273": {
+      "source_sha256": "5a183f0b23bc8230cf5f0342eb7ca9463ead01a75aaa92a9240fa95787a9f5ef",
+      "text": "### Prepare State for This Run\n\nKeep recovery records in `outputs/extensions/<chapter>/<run_id>/` and downloads under `downloads/<turn_id>/`. Initialize state once at the start of a new run. Reinitializing during execution can discard resource identifiers.\n\nStart the timer immediately before execution to exclude study time between cells. The 600-second limit is checked when events arrive and cannot forcibly interrupt a silent stream. The HTTP timeout is 90 seconds.\n"
+    },
+    "me32151fdad19": {
+      "source_sha256": "e77c388012c35b2f73c090aba5a84246a170221a1a3470536aa45876ec93bd30",
+      "text": "### Create the Session and Stream the Response\n\nDisplay text deltas and collect the final response, then retrieve the root Turn after closing the stream. Block duplicate submission of new work. Detect failures and cancellation and treat unexpected external actions as errors.\n\nTurn completion, a model's Skill mention, and successful JSON parsing do not establish actual Skill use. Inspect registration and commands separately in the next two sections. Do not assume fixed event counts or ordering, or treat `idle` alone as success.\n"
+    },
+    "09-registration-guide": {
+      "source_sha256": "14decaf578b38e87678ef8377d0e57aefe43b2533aac317e311d1d9119926a76",
+      "text": "## 4. Inspect Custom Skill Registration in This Environment\n\nUse the Environment ID from the creation event with `environments.retrieve()`. If it was not recorded, retrieve the Session to recover it; stop with a clear error if absent. Also confirm that the returned environment ID matches the requested ID.\n\nDisplay only names, types, and descriptions and check this Skill's name and `inline` type. This confirms registration, not usage or the default image's full Skill inventory. Do not infer the installed absolute path from this metadata.\n"
+    },
+    "09-commands-guide": {
+      "source_sha256": "f8d39771524733f1d518bf3980b2fb61e975425ae70dd3c93a4c377dc104db6c",
+      "text": "## 5. Inspect Actual Commands from This Turn\n\nIterate through SDK pages from `items.list()` and display only commands belonging to this root Turn. Read the script path, input and output arguments, working directory, status, exit code, and output. An unreported exit code of `None` is not zero. Distinguish reading a script from executing it with Python.\n\nThe separate validator checks an explicit Python CLI command from the same Turn that completed with exit code zero and the intended input and output arguments. It does not fix the installed path. If execution is wrapped in complex shell or inline Python code, investigate whether explicit CLI evidence is available. This example checks explicit CLI invocation, not arbitrary shell semantics or a complete audit log.\n"
+    },
+    "09-download-guide": {
+      "source_sha256": "3c1715c55613e4419e4b2b4d7801340be6cb51bab548dc80fc5b92de146f4ff0",
+      "text": "## 6. Download All Three Output Files\n\nScope selection to the completed Session and Turn with `artifacts.for_result(result)`. Download exact paths and display the remote artifacts and local paths and sizes. The SDK rejects missing or duplicate matches.\n\nMark completion only after all three files arrive. Rerun only before session cleanup. Error handling attempts cleanup, so retries in the same session are not guaranteed; do not treat partial files as success or automatically rerun analysis.\n"
+    },
+    "09-results-guide": {
+      "source_sha256": "2d2005662704287ecaecb6220f360d5fb96a43739a7f38296ecca531eb436b5d",
+      "text": "## 7. Read Analysis Results and Execution Records\n\n| Field or record | Meaning |\n| --- | --- |\n| Local ZIP SHA-256 | Identifies bundle bytes in the request |\n| `input_sha256` | Identifies input bytes read by the script |\n| `script_revision` | Revision label defined in code |\n| Command status and exit code | Execution outcome |\n| JSON and report | Actual generated outputs |\n\nRead the final response, local `summary.json`, `skill_evidence.json`, and Korean report. The normal path below displays local results without new API requests. A separate validator compares hashes, Skill name, revision, calculations, and report contents against reference values.\n\nThe evidence JSON and revision label provide neither an independent signature nor tamper protection. They support this exercise's combined registration, command, input-hash, and output checks. Neither a default Skill mention nor registration alone establishes actual use.\n"
+    },
+    "extension-09-10": {
+      "source_sha256": "03e4146c33f7b5e5d3216cbe31dae5f26c9c82e28c1f8cee9d4df973c01f211f",
+      "text": "## 8. Clean Up the Session and Retain Local Results\n\nRun cleanup even if you stop studying between stages. Download required files before deleting the session. The helper identifies owned sessions using this run's metadata, cancels work if needed, then deletes and confirms API absence through retrieval returning `404`.\n\nInspect `deleted` and `verified_absent`. These do not establish synchronous completion of physical sandbox cleanup. Preserve an existing execution or validation error if cleanup also fails. The validator adds history and file checks before deletion and still attempts cleanup on failure.\n\nLocal Skill sources, ZIP bytes, downloads, and result objects remain. This inline ZIP exercise creates neither a separate Skills API upload resource nor a saved Agent to delete. Manual Jupyter execution adds no reference checks or receipt.\n"
+    },
+    "extension-09-09": {
+      "source_sha256": "0d4774f2589a3459cdbc0211e1484d7e099a03ebe084960c50bc8aa13c655c3b",
+      "text": "## 9. Failure Actions and Reuse Scope\n\n| Stage | What to inspect |\n| --- | --- |\n| Bundle preparation | Manifest metadata, missing files, and the ZIP's top-level directory |\n| Environment preparation and registration | Attached Skill, current Environment ID, name and type |\n| Script execution | Actual command, CLI arguments, completed status, and exit code |\n| Result collection | Publication, all three downloads, partial transfers, and cleanup results |\n\nDo not treat failed commands or missing evidence as successful use. Clean up in Section 8 and investigate the cause without blindly resubmitting input. Do not print keys or raw API error bodies. Use `outputs/extensions/<chapter>/<run_id>/creation.json` and the Session ID for forced-termination recovery. Validation copies are in `outputs/extensions-validation/`; results and cleanup records are in `outputs/extensions/`. See the [quickstart](../quickstart.ipynb) for recovery.\n\nThis chapter covers registration and explicit execution of one inline ZIP. Skills API uploads and version references, Responses shell attachments, and capability directories use different request surfaces. They are outside this exercise, rather than implied to be unsupported.\n"
+    },
+    "09-next-chapter": {
+      "source_sha256": "24ca3d332c72c32612b651e159858c46d1fdb2cb81ede42932bf33a6d2b8996f",
+      "text": "## Completion Criteria and the Next Chapter\n\nExplain Skill files, ZIP and API fields, registration versus execution evidence, and the meanings of hashes, revisions, and outputs. Distinguish usage checks from automatic-selection evaluation or complete enterprise auditing.\n\n[Chapter 10: Plugins](10_plugins.ipynb) packages this Skill and MCP settings together. Combining Skills with [Chapter 15: Multi-agent](15_multi_agent.ipynb) is a separate optional extension; Chapter 15 currently attaches no Skill.\n"
+    },
+    "builtin-skills-guide-09": {
+      "source_sha256": "f8ef1a352685cb174d9915dd7af5500e2ea92166836bca37ab6670c926e0f290",
+      "text": "### Registration List and Usage Evidence\n\nCheck the Custom Skills registered through `environments.retrieve(...).skills`. Not all built-in Skills in the image appear here. To validate actual use, the validation tool cross-checks downloaded evidence files against the bundled script's execution history. [How to check built-in Skills](../../docs/extensions/builtin-skills.md).\n"
+    },
+    "refs-e9711d468183": {
+      "source_sha256": "d221c11ab8ff167584c2731a653188b355058fbf0f4c0a901f77a2f3c3ac69b2",
+      "text": "## Official References\n\n### Agents API-Specific Documentation\n\n- [OpenAI-hosted — Add skills and plugins](https://developers.openai.com/api/docs/guides/agents-api/environments/openai-hosted#add-skills-and-plugins) — Configuring skills, plugins, and capability_directories in a hosted environment.\n\n### Supplementary Material — Shared Documentation\n\n- [Skills — Agents API section](https://developers.openai.com/api/docs/guides/tools-skills#agents-api) — This page also covers the Responses API. Read the explanations of SKILL.md discovery and capability_directories in the Agents API section. Do not mix Skills API uploads, version references, or shell attachments from other sections with this chapter's inline ZIP request.\n\nLinks checked: 2026-11-03. Checking documentation links is separate from validating execution of the API exercise.\n"
+    }
+  }
+}

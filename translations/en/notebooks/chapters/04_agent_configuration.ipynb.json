@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "source": "notebooks/chapters/04_agent_configuration.ipynb",
+  "language": "en",
+  "glossary_sha256": "52433c24e8c1a4bceb9ce80bfc4df53475c4cc7d646c1fd88be88f7db4ec7950",
+  "review_status": "machine-translated; structure checked; cross-chapter learning flow reviewed; live-execution and plain-English wording reviewed",
+  "units": {
+    "intro-04-00": {
+      "source_sha256": "77efa165f4fd24f705e90aeb462c6eb1fda08b2bbe5691f99fd07d9722e2b488",
+      "text": "# Chapter 4. Agent Configuration and Reuse\n\nCompare a stored Agent’s default instructions with Session-specific changes.\n\n| Connection | This chapter |\n| --- | --- |\n| Shared example | Sales analysis of the same sales.csv |\n| New capability | Reuse Agent configuration and inspect per-Session overrides |\n| Exercise composition | One stored Agent · two independent Sessions · message input |\n"
+    },
+    "intro-04-01": {
+      "source_sha256": "521877e7f3e331b600c7a6ddb764f274863dd79b195f2c453a9398e41765ddb3",
+      "text": "<!-- colab-link -->\n[Standalone notebook download instructions](../../docs/colab.md) · For upload to Colab\n"
+    },
+    "d3567b168d62": {
+      "source_sha256": "47e291a8820ce25d94baaf471858b1d8716fda95d7c4bd9f9d9fde487484f722",
+      "text": "## Learning Guide\n\n| Aspect | Chapter 3 | This chapter |\n| --- | --- | --- |\n| Reused object | The same Session | The same saved Agent |\n| Number of Sessions | One | Two |\n| Input flow | Follow-up input to an existing Session | Create a new Session each time |\n| Learning goal | Continue conversation and reuse files | Reuse defaults and override settings per Session |\n\nReusing an Agent ID does not carry over another Session's conversation or files. Send the CSV separately to both Sessions. Both analyses use the same model, input, and output format; the comparison concerns per-session instructions.\n\n| Stage | API used directly | What to inspect |\n| --- | --- | --- |\n| Create a saved Agent | `agents.create()` | Agent ID, model, and base instructions |\n| Run with defaults | `sessions.create(agent_id=...)` | Base Session, completion, and analysis JSON |\n| Run with an override | Same Agent ID and inline instructions | Another Session, completion, and analysis JSON |\n| Compare settings | `sessions.retrieve()`, `agents.retrieve()` | Unchanged model, override scope, and preserved defaults |\n| Cleanup | Deletion and retrieval in the cleanup helper | API absence of two Sessions and one Agent |\n\nRun the cells below from top to bottom for the manual exercise. For automated validation, run `uv run --group dev python scripts/run_intro.py --chapter 4 --live`. This chapter does not compare model quality or cost, or measure instruction-following rates.\n"
+    },
+    "42a06096": {
+      "source_sha256": "674df1ec90ceb36110c44b09cbafe4a54ab9dbfe68c2f65023c75d308ce0c6e7",
+      "text": "**Exercise guide:** Run each chapter independently in a fresh kernel. See the [shared learning and exercise guide](../../docs/validation.md) for execution modes, response/file differences, and validation records.\n"
+    },
+    "intro-04-02": {
+      "source_sha256": "8614865f0253bfa34027e523b47c9591f8193ca8c03ad814723f9ea66cee2865",
+      "text": "## 0. Exercise Preparation and Execution Modes\n\nLocally, run `uv sync --locked` and `uv run jupyter lab` from the repository root, then select the `.venv` kernel.\nIn Colab, upload the standalone notebook from the download instructions. The preparation cell installs the packages directly and creates the bundled code and data.\nExplicitly allow live API exercises by setting **RUN_LIVE=True**.\nThe key is read from `.env.local` or Colab Secrets and is not printed. Live runs incur costs.\n"
+    },
+    "intro-04-05": {
+      "source_sha256": "bc955c9189c0731434573d251c561e6613071b3ade6faf0336ef6e94f15f48cd",
+      "text": "## 1. Prepare Saved Settings and Per-session Input\n\nStore the model and base instructions in a saved Agent, and supply the CSV and current task as input to each Session. The following cell displays a local CSV without calling the API. Each Session saves and analyzes its own copy of the CSV; the exercise does not assume shared files.\n"
+    },
+    "d6cc7244": {
+      "source_sha256": "a3c915de0b445d7933dfbfaac74c1195cbafc2789ae8d71bf2126682173968b7",
+      "text": "### Build the Request\n\n`BASE_INSTRUCTIONS` requires Python calculations and prohibits inventing transactions. Compose the final JSON format in `METRICS_CONTRACT` into the actual input message. Use an OpenAI-hosted sandbox with external networking disabled because the analysis needs only the standard library. This chapter retrieves text JSON and applied settings without downloading files.\n"
+    },
+    "04-override-guide": {
+      "source_sha256": "4bfb5ec939da78d65f4de4e7f227c0a0379d48a82068fd526a2b4a8abf213794",
+      "text": "### What Does a Per-session Override Change?\n\n`agent_id` selects the saved Agent's defaults. Passing `agent={\"instructions\": ...}` during session creation replaces that Session's instructions with the supplied value. The omitted model setting comes from the saved Agent.\n\nTo preserve base instructions while adding a presentation preference, **concatenate the base string and the extra sentence in Python**. This example does not rely on the API automatically appending instructions. Inspect the added sentence and changed field below. Confirm override scope through retrieved settings rather than judging whether a response appears shorter.\n"
+    },
+    "intro-04-07": {
+      "source_sha256": "7845e23867328bd2363abfa327d211aea640fda4e7a8eed98505cec66e3daa98",
+      "text": "## 2. Create a Saved Agent\n\nFirst store reusable model settings and instructions with `agents.create()`. This resource is separate from a Session, so track the Agent ID as well. Do not put API keys in Agent settings, names, or metadata.\n\nThe following four execution stages use `cleanup_on_error()` to attempt cleanup on errors and ordinary interrupts. In the normal path, **run the cleanup cell in Section 6**. Also run it if you stop studying between cells. Forced kernel termination does not guarantee automatic cleanup.\n"
+    },
+    "mab0b6cff5556": {
+      "source_sha256": "ca20c44f56c696644d9824e7562ea2c7b8f12fb370e62d4ed9be1a6d21f0607e",
+      "text": "#### Enable Live API Execution\n\nSelect `RUN_LIVE=True` in the configuration cell, then run this preparation cell. With the default False setting, execution stops here with an error message. Subsequent API cells do not repeat the execution-mode check. The `requires_api` tag is for the offline validator and is not an access control mechanism in Jupyter itself.\n"
+    },
+    "m1eae4f91cd59": {
+      "source_sha256": "142472b9e78a07a1bfc610d327ef850d43f2be86d5b39b0140811361a9ceb12a",
+      "text": "### Prepare State for This Run\n\n`output_dir` stores recovery records rather than analysis reports. Run state preparation once when starting a new run. Rerunning it during execution can discard resource IDs and submission records.\n\nAfter receiving the Agent creation response, immediately track its ID and use `save_agent_reference()` to record only the run ID and Agent ID in `agent.json`. This helper does not wrap API execution. Session creation-attempt metadata is recorded separately in `creation.json`.\n\nStart each analysis timer immediately before submission. The 600-second limit is checked when events arrive; it cannot forcibly interrupt a silent stream. The client HTTP timeout is 90 seconds.\n"
+    },
+    "m2577a1982a8c": {
+      "source_sha256": "7be6fadf0f14b797292d83de2e1e93e7ddded0022306ff9d39c2b9503b747182",
+      "text": "### Inspect the Saved Agent's Baseline Settings\n\nThe next cell creates one saved Agent. Inspect its ID, model, and base instructions. This step has not yet created an analysis Session or executed the task.\n"
+    },
+    "04-base-guide": {
+      "source_sha256": "6d7de08c04cf4a5c22499aa60037d3eccc7a5491faad61df43a896b72fe0e1d6",
+      "text": "## 3. Run a New Session with Defaults\n\nPass `agent_id=saved.id` and omit inline Agent settings. Supply per-session input and environment directly in the creation request. Identical environment settings do not make these requests share a conversation or filesystem.\n\nUse Chapter 2's streaming flow to display text and collect the final response. Treat unexpected external actions as errors and detect failures and cancellation with `check_event()`. Do not assume fixed event counts or ordering, or treat `idle` alone as success.\n\nConfirm completion in both the first result and retrieved root Turn, then display the base-analysis JSON. Successful JSON parsing does not guarantee field types or calculation correctness.\n"
+    },
+    "04-custom-guide": {
+      "source_sha256": "a633d6496a1a6487abf5c1b7c6b56da6c4eb3a0cd94e3544f2c6329175b3330a",
+      "text": "## 4. Run Another Session with the Same Agent and New Instructions\n\nUse `sessions.create()` again to create a **new Session**. Unlike Chapter 3's follow-up input, do not use `sessions.stream(existing_session_id, ...)`. Pass the same `agent_id` together with `agent={\"instructions\": override_instructions}`.\n\nSupply the CSV input and environment configuration again without overriding the model. Inspect the new Session ID, completion status, and analysis JSON. Equal analysis values do not establish that the override was applied, so retrieve settings directly in the next section.\n"
+    },
+    "intro-04-09": {
+      "source_sha256": "0ce9909d7a3c58f993c49e3987a5d988d854d4476e1f255e004a84bb8cde814d",
+      "text": "## 5. Compare Applied Settings and the Saved Agent\n\nRetrieve both Sessions and the original Agent through the API. Inspect **how saved defaults were applied to each Session**, rather than whether a Session was reused.\n\n| Check | Expected result |\n| --- | --- |\n| Two Session IDs | Distinct |\n| Models in both Sessions | Match the initially selected model |\n| Base Session instructions | Match the initial base instructions |\n| Override Session instructions | Match the override instructions |\n| Retrieved saved Agent | Retains the initial model and base instructions |\n\nRetrieved settings, Turn completion, and calculation correctness are separate checks. The comparison below establishes configuration scope; a separate validator checks Python commands and reference values. It does not measure compliance with presentation preferences.\n\nThis chapter does not update the saved Agent. Specifying session instructions and modifying the saved Agent itself are separate operations.\n"
+    },
+    "intro-04-10": {
+      "source_sha256": "4b5a04c093182d82134ebf7672dadaffcadca874adc3dfcef25cb6aef6ece706",
+      "text": "## 6. Clean Up Both Sessions and the Saved Agent\n\nHaving inspected results and settings, clean up the resources created by this run. Also execute this cell if you stop studying between steps. Ending a stream does not automatically delete a Session or saved Agent.\n\n`cleanup_resources()` attempts cancellation, deletion, and absence verification for tracked Sessions, then deletes and retrieves the saved Agent. A failure for one resource does not skip cleanup attempts for the others. Cleanup errors are not reported as success, and existing execution or validation errors remain the primary cause.\n\nA complete normal run shows two Sessions and one Agent; inspect `deleted` and `verified_absent` for each. These establish API absence, not synchronous completion of physical sandbox cleanup. A partial run lists only resources actually created.\n\nLocal result and settings objects and recovery records remain after deletion. Deleted resources are unavailable for further server queries.\n"
+    },
+    "intro-04-12": {
+      "source_sha256": "acd68693a8f0b8112f676b94e451137a0dbc5bbaa716de7549d271c026e69901",
+      "text": "## 7. Failure Actions and the Next Chapter\n\n- For 401/403, check authentication and project access; for 429, check API limits. Do not print keys or raw error bodies.\n- After a connection error, inspect cleanup results and saved IDs first. Blindly rerunning a creation cell can create another resource. Creation-attempt flags prevent duplicate submissions within the same run state in this exercise.\n- After forced termination, identify only this run using the Agent ID in `outputs/intro/<chapter>/<run_id>/agent.json` and Session creation metadata in `creation.json`. A retained local file alone does not establish that a resource still exists. If you used the validator, also inspect `summary.json`.\n- If the Agent creation response was never received, `agent.json` and the tracked ID may be absent. The current helper does not automatically discover or recover that Agent. Inspect run ID metadata and names in the project's Agent list to identify owned resources; do not delete Agents belonging to other exercises or production. See the [quickstart](../quickstart.ipynb) for general recovery steps.\n\nOn completion, you should be able to interpret both analysis JSON results, the configuration comparison, and deletion confirmations for two Sessions and one Agent. [Chapter 5](05_files_artifacts.ipynb) supplies the same CSV as a file and downloads analysis JSON and a Markdown report.\n"
+    },
+    "refs-deb40fe26b68": {
+      "source_sha256": "f602d8ae2f06c8ede0a2ae96978783ba03bd122417a68173afff9592eb479f16",
+      "text": "## Official References\n\n### Agents API-Specific Documentation\n\n- [Configuring Agents](https://developers.openai.com/api/docs/guides/agents-api/configuration) — Saving and reusing Agents and overriding settings per session.\n\nLinks checked: 2026-11-03. Checking documentation links is separate from validating execution of the API exercises.\n"
+    }
+  }
+}

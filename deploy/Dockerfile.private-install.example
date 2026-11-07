@@ -1,0 +1,11 @@
+# Production adaptation, not the unencrypted fixture used in the local lab.
+# Build with: docker build --secret id=pip_config,src=/secure/pip.conf --secret id=corp_ca,src=/secure/ca.pem ...
+FROM python:3.12-slim
+COPY requirements.lock /opt/requirements.lock
+RUN --mount=type=secret,id=pip_config,required=true \
+    --mount=type=secret,id=corp_ca,required=true \
+    PIP_CONFIG_FILE=/run/secrets/pip_config PIP_CERT=/run/secrets/corp_ca \
+    python -m pip install --only-binary=:all: --require-hashes -r /opt/requirements.lock
+# pip.conf: [global] index-url = https://<internal-index>/simple
+# Inject authentication through your approved pip credential/keyring mechanism.
+# Never put credential-bearing URLs in source, build arguments, images, or logs.

@@ -1,0 +1,15 @@
+{
+  "Agent": "Agent",
+  "Session": "Session",
+  "Turn": "Turn",
+  "Harness": "Harness",
+  "Skill": "Skill",
+  "Plugin": "Plugin",
+  "사내": "private / internal",
+  "모의": "mocked",
+  "실연결": "live API connection",
+  "승인": "approval",
+  "검증": "validation",
+  "실행 환경": "environment",
+  "입문 과정": "Fundamentals"
+}

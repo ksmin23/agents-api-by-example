@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "source": "notebooks/chapters/07_function_tools.ipynb",
+  "language": "en",
+  "glossary_sha256": "52433c24e8c1a4bceb9ce80bfc4df53475c4cc7d646c1fd88be88f7db4ec7950",
+  "review_status": "machine-translated; structure checked; cross-chapter learning flow reviewed; live-execution and plain-English wording reviewed",
+  "units": {
+    "extension-07-00": {
+      "source_sha256": "2c4feb255b6a0d0902cb67f8cab023c9c17a89bbc3ca73e7cc775b66675585ad",
+      "text": "# Chapter 7. Connecting Business Data with a Function Tool\n\nConnect an application-side monthly target lookup to the base CSV report.\n\n| Connection | This chapter |\n| --- | --- |\n| Shared example | Sales analysis of the same sales.csv |\n| New capability | Register Function Tools and observe official SDK handling |\n| Exercise composition | CSV analysis + local business function + target/attainment response |\n"
+    },
+    "extension-07-01": {
+      "source_sha256": "521877e7f3e331b600c7a6ddb764f274863dd79b195f2c453a9398e41765ddb3",
+      "text": "<!-- colab-link -->\n[Standalone notebook download instructions](../../docs/colab.md) · For uploading to Colab\n"
+    },
+    "d2642b23c156": {
+      "source_sha256": "6881f407954943bb45249ef064bafc6a0bf0f6982dca8bea1693fa09ab65800e",
+      "text": "## Learning Guide\n\nChapter 6 prepared sandbox packages. This chapter connects sandbox CSV analysis to a **function executed by the current Python application**. Business data comes from synthetic JSON, without a real internal service or credentials.\n\nThe agent requests a target → the official SDK validates arguments → the application function runs → the SDK submits its result → the agent uses the target in analysis and reporting.\n\n| Task | Execution location |\n| --- | --- |\n| CSV analysis and report writing | OpenAI-hosted sandbox |\n| `get_sales_target()` | Local or Colab Python running the notebook |\n| Argument validation, function invocation, and result submission | Official SDK in the application |\n| Final response and file reads | Notebook |\n\nSandbox networking does not change the local function's execution location or network permissions. The basic exercise uses SDK automation; direct pending-action responses belong in advanced material.\n\nRun manually from top to bottom, or validate automatically with `uv run --group dev python scripts/run_extensions.py --chapter 7 --live`.\n"
+    },
+    "8fd7db74": {
+      "source_sha256": "674df1ec90ceb36110c44b09cbafe4a54ab9dbfe68c2f65023c75d308ce0c6e7",
+      "text": "**Exercise guide:** Run each chapter independently in a fresh kernel. See the [shared learning and exercise guide](../../docs/validation.md) for execution modes, response/file differences, and validation records.\n"
+    },
+    "extension-07-02": {
+      "source_sha256": "2af8fd1e35d4e27453702ceb34fd3ee7e5c7e8507bf657dc0b8710c59d7036ca",
+      "text": "## 0. Environment Setup and Execution Mode\n\nLocally, run `uv sync --locked` and then select the `.venv` kernel. In Colab, upload the standalone notebook from the download instructions. The preparation cell installs packages directly and creates the included files.\nActual API calls and sandbox creation occur only when RUN_LIVE below is changed to True.\nReuse the key and model from the existing `.env.local`, and do not put the key in the sandbox, ZIP, or logs.\n"
+    },
+    "extension-07-05": {
+      "source_sha256": "9dab68f79c4e63042b4bd88139e9d186d1af22057b1405d8ed9de4de93169030",
+      "text": "## 1. Prepare CSV Input and the Business Function\n\nCalculate CSV revenue with Python in the sandbox, while an application function reads the sales target from local `data/sales_targets.json`. Do not upload the target file to the sandbox or embed the target value in the prompt.\n\nReading the local file below is not an API call. Supply the CSV as an inline file in the later request.\n"
+    },
+    "6034fcdd": {
+      "source_sha256": "c9105aced343d0e2022081c22038a7ca7c002d025df4dcc536135ff145daa60f",
+      "text": "### Define the Business Function\n\nThe function takes one model-selected input, `period`, and returns a Python dictionary. Check the role from the application's `ACTOR_ROLE`, not a model-supplied argument. This fixed role is for learning, not a real authentication system.\n\nType annotations on a plain Python function do not themselves add runtime argument validation. The SDK adapter created later validates the argument schema, while the function body separately checks allowed roles and periods.\n"
+    },
+    "07-preflight-guide": {
+      "source_sha256": "afa09f7d7dc25d36472fe4f453f6189b8ff179f47d512befadc38f4dc4975832",
+      "text": "### Local Preflight and SDK Tool Creation\n\nThe direct call below is a **local preflight**, not evidence of an Agents API tool invocation. Distinguish it from the tool-call count observed during the later API run.\n\n`function_tool()` uses annotations and the docstring to generate a tool description and argument schema and bind the local handler.\n\n| Usage | Return value or role |\n| --- | --- |\n| `get_sales_target(\"2026-01\")` | Python dictionary |\n| Pass an argument dictionary to `sales_target_tool` | SDK validation, invocation, and serialization |\n| `sales_target_tool.definition` | Tool description and schema sent to the model |\n\nDo not apply `json.dumps()` again to output already serialized by the SDK. Let the SDK submit results during the normal API run.\n"
+    },
+    "extension-07-07": {
+      "source_sha256": "db3f1636dcfdca58c68ca50a807dba1db3ab97913d331158a20515c0bc43bc8e",
+      "text": "## 2. Register the Tool and Build the Analysis Request\n\n| Setting | Value | Role |\n| --- | --- | --- |\n| `agent.tools` | `sales_target_tool.definition` | Description and argument schema available to the model |\n| `tool_handlers` | Tool name mapped to `sales_target_tool` | Route model requests to the local function |\n| `environment.files` | Inline CSV data | Analysis input in the sandbox |\n\nThe official SDK handles function-call Items by validating arguments, invoking the local function, serializing output, and submitting results to the original Turn and Call. Do not also send manual `tool_result` responses for the same call.\n\nThe [Function Tool advanced material](../../docs/extensions/function-tool-actions.md) covers direct pending responses and result caching for functions with side effects. This chapter's read-only lookup is separate from Chapter 11's approval and durable caching.\n"
+    },
+    "07-contract-guide": {
+      "source_sha256": "6169c892cda5177d34a815cd21bca4118d6b2a16e811dc09e7af0998530d3807",
+      "text": "### Distinguish Final Response and File Formats\n\n| Result | Contents |\n| --- | --- |\n| Final JSON | `metrics`, `target_revenue`, `attainment_rate` |\n| `summary.json` | Base sales metrics only |\n| `report.md` | Sales, target, and attainment presented in Korean |\n\n`METRICS_CONTRACT` defines the nested `metrics` structure; `RESULT_CONTRACT` defines the final enriched response. Avoid conflicting instructions to return only the base object and to return the enriched object. Ask the agent to obtain the target from the actual tool result.\n"
+    },
+    "07-execution-guide": {
+      "source_sha256": "f36fce2999c8810437a96d8e7d4f76734270f95ed95a947fd8858b8e764d8a4c",
+      "text": "## 3. Execute the Agents API with the Registered Tool\n\nPass the prepared `agent` and `environment`, and connect local execution with `tool_handlers=handlers`. Display normal text responses and Function Call Items; retrieve completed call history in the next section.\n\nEach execution and result stage uses `cleanup_on_error()` to attempt cleanup on errors and ordinary interrupts. In the normal path, **run the cleanup cell in Section 7**, including when you stop studying between steps. Forced kernel termination does not guarantee automatic cleanup.\n"
+    },
+    "mcf6b13e5783d": {
+      "source_sha256": "ca20c44f56c696644d9824e7562ea2c7b8f12fb370e62d4ed9be1a6d21f0607e",
+      "text": "#### Enable Live API Execution\n\nSelect `RUN_LIVE=True` in the configuration cell, then run this preparation cell. With the default False setting, execution stops here with an error message. Subsequent API cells do not repeat the execution-mode check. The `requires_api` tag is for the offline validator and is not access control enforced by Jupyter itself.\n"
+    },
+    "me1e4696f6d0a": {
+      "source_sha256": "76424173f8c0dffc194326301f874786ce74739f1e969385871bb7be417a0b76",
+      "text": "### Prepare State for This Run\n\nKeep recovery records at the existing exercise path `outputs/extensions/<chapter>/<run_id>/`. Save downloads under `downloads/<turn_id>/`. Run state preparation once at the start of a new run; rerunning it during execution can discard resource identifiers.\n\nStart the timer immediately before API execution. The 600-second limit is checked when events arrive and cannot forcibly interrupt a silent stream. The client HTTP timeout is 90 seconds.\n"
+    },
+    "m76672dfeb9bc": {
+      "source_sha256": "4e7eeb7f15262273fc8780d0e1ea5986c6d3c0285ab0832cc5f605ae43c2fcac",
+      "text": "### Observe Session Creation and Automatic Tool Handling\n\nBlock duplicate submission of new work. The SDK invokes functions and submits results; the main lesson does not add a separate pending-response loop. A displayed Function Call Item alone does not establish success; distinguish it from stored status in the next section.\n\nCollect the response with `with_result_collection()`, obtain it with `get_final_result()`, then retrieve the root Turn after closing the stream. Do not assume fixed event counts or ordering, or treat `idle` alone as success.\n"
+    },
+    "07-history-guide": {
+      "source_sha256": "9ac3fc0a7c1c1bc4468609ffa6e74f572f83fbb3c2b76d0c999d7ba2e5333bf0",
+      "text": "## 4. Inspect Actual Function Calls from This Turn\n\nIterate through SDK pages from `items.list()` and display only `function_call` Items belonging to this root Turn. Inspect names, arguments, Call IDs, status, and the target function's call count. Local preflight calls are not part of this history.\n\nThe prompt's request to call once is not an execution guarantee. The separate validator checks the exact function name, period, completed status, and one call. This does not establish exactly-once behavior across failures or process restarts, or validate durable caching. Distinguish SDK stream-local duplicate handling from Chapter 11's durable cache.\n"
+    },
+    "07-download-guide": {
+      "source_sha256": "a8e2e6f924b4c97726eee5d10d47bf2d31c7f036073fe13f9f8fb7d29f538545",
+      "text": "## 5. Download Files from the Exact Turn\n\nAs in Chapter 5, use `artifacts.for_result(result)` to scope selection to the result's Session and Turn and download exact paths. The SDK rejects missing or duplicate matches. Display returned artifacts alongside actual local paths and sizes.\n\nMark completion only after both files arrive. Rerun only before session cleanup; partial files are not success. Error handling attempts cleanup, so downloading again in the same session is not guaranteed and analysis is not automatically rerun.\n"
+    },
+    "07-results-guide": {
+      "source_sha256": "d16aeb5d3018d014db90511642e684d231394f96ce06f71b09efa204bbbc5a71",
+      "text": "## 6. Read the Enriched Response and Downloaded Files\n\nThe final response's `metrics` contains base sales values; `target_revenue` and `attainment_rate` enrich them using the tool result. `summary.json` contains only base metrics. Do not treat these as identical JSON structures.\n\nJSON represents attainment as a fraction: for example, `0.85` corresponds to `85%` in a report. The prompt requests calculation from the actual tool result and CSV rather than embedding the answer.\n\nThe normal path below parses final and local JSON and displays the report. JSON parsing, human inspection, and reference comparisons for calculations and reports in the separate validator are distinct checks. Downloaded files remain readable after session deletion.\n"
+    },
+    "extension-07-10": {
+      "source_sha256": "ea67862e33d5ce81fef5fa36a01dcae0009b35a3f4e7331a51add8c50e2a70b2",
+      "text": "## 7. Clean Up the Session and Retain Local Results\n\nRun the cleanup cell even if you stop studying between steps. Download required files before deletion. The helper identifies owned sessions using this run's metadata, cancels work if needed, and confirms API absence through deletion and retrieval returning `404`.\n\nInspect `deleted` and `verified_absent` in the output. These do not establish synchronous completion of physical sandbox cleanup. Preserve an existing execution or validation error if cleanup also fails.\n\nThe validator saves execution copies in `outputs/extensions-validation/` and results and cleanup records in `outputs/extensions/`. Manual Jupyter execution adds no reference checks or receipts. Local function definitions, results, and downloaded files remain after session deletion; this chapter creates no separate saved Agent.\n"
+    },
+    "extension-07-09": {
+      "source_sha256": "7180163f875f89e2541f9cf0240220d1c07dd34e1e1979621e8d666acbc8035e",
+      "text": "## 8. Error Handling and Recovery Scope\n\n| Situation | Basic exercise behavior or check |\n| --- | --- |\n| Invalid argument structure | SDK adapter checks before invoking the function |\n| Disallowed role or period | Function raises `PolicyError` |\n| Tool argument, execution, or output error | SDK submits a generic failure without sending original exception text to the model |\n| Missing tool registration | Check names, schema, and local handler mapping |\n| API or stream error | Distinguish from function errors and inspect cleanup results and saved IDs |\n\nThe current SDK's automatic failure result uses `success=False` and generic error text. Do not assume it forwards `unknown_period` or `role_not_allowed` verbatim to the model.\n\n**Optional diagnostics:** The pinned SDK supports `on_tool_error` on follow-up `sessions.stream()` calls, not on the `sessions.create()` call used here. The reference code below is not executed and applies only when adding a later Turn that needs diagnostics. Display tool name, stage, and exception type rather than exception text. This callback is not for API or stream errors.\n\n```python\ndef show_tool_error(error):\n    print({\"tool\": error.tool_name, \"stage\": error.stage,\n           \"error_type\": type(error.error).__name__})\n\n# Optional for a later turn: pass on_tool_error=show_tool_error to sessions.stream(...).\n```\n\nDo not blindly rerun functions or manually duplicate tool results after a dropped stream. This basic example attempts cleanup on errors and does not implement automatic recovery after interruption. After forced termination, identify only this run using `outputs/extensions/<chapter>/<run_id>/creation.json` and the Session ID. Do not print keys or raw error bodies.\n\nSee the [advanced material](../../docs/extensions/function-tool-actions.md) and Chapter 11 for direct pending responses and durable caching. [Chapter 14: Observer Reconnection](14_operations.ipynb) covers a basic run without a Function Tool, not validation of tool recovery.\n"
+    },
+    "07-next-chapter": {
+      "source_sha256": "6a8ac8f61b4b444703dcbcaf5e2b4f901e7ab80a5274444633e9fea33832a2d6",
+      "text": "## Completion Criteria and the Next Chapter\n\nExplain function schema and local handler registration, actual API call history, the difference between the enriched response and base-summary file, and session cleanup results. Automated validation compares actual call conditions and tool results against CSV reference values; a direct preflight alone does not establish API tool execution.\n\n[Chapter 8: MCP](08_mcp.ipynb) exposes the same monthly target lookup through an MCP server. Continue by comparing application function registration with MCP tool integration.\n"
+    },
+    "builtin-skills-guide-07": {
+      "source_sha256": "1e1f3ea7a644df13d1b8c40d5ba128734ad770be5ed558be4913152be2c3919d",
+      "text": "### Why Built-in Skills Appear in Outputs\n\nOpenAI-hosted images may contain built-in Skills independently of user registration. CSV files fall within the scope of Spreadsheets. A model's mention alone does not establish actual use; see the [built-in Skills supplement](../../docs/extensions/builtin-skills.md) for the default list and how to check it.\n"
+    },
+    "refs-ec4be256af56": {
+      "source_sha256": "399e85281395e932f54568de8069c0fd39e247d4f76d960aa8597687b36f7f19",
+      "text": "## Official References\n\n### Agents API-Specific Documentation\n\n- [Functions](https://developers.openai.com/api/docs/guides/agents-api/tools/functions) — Function definitions, required actions, returning tool results, and recovery.\n- [Events and items](https://developers.openai.com/api/docs/guides/agents-api/sessions/events) — Event streams, completion status, and retrieving saved items and turns.\n\nLinks checked: 2026-11-03. Checking documentation links is separate from validating execution of the API exercise.\n"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+version: 1
+project:
+  id: 8edee8ab-5a24-45d7-92eb-b78e83ea7bd0
+  title: Agents API 실습 가이드
+  description: CSV 분석·보고서 예제로 시작해 도구 연결, Skills·Plugins, 승인과 사내 배포까지 실습합니다.
+  github: https://github.com/ksmin23/agents-api-by-example # managed-repository
+  toc:
+    - file: index.md
+    - title: 시작하기
+      children:
+        - file: notebooks/setup.ipynb
+        - file: notebooks/quickstart.ipynb
+    - title: 입문 과정
+      children:
+        - file: notebooks/chapters/01_concepts.ipynb
+        - file: notebooks/chapters/02_first_agent.ipynb
+        - file: notebooks/chapters/03_sessions.ipynb
+        - file: notebooks/chapters/04_agent_configuration.ipynb
+        - file: notebooks/chapters/05_files_artifacts.ipynb
+        - file: notebooks/chapters/06_environment.ipynb
+    - title: 기능 확장
+      children:
+        - file: notebooks/chapters/07_function_tools.ipynb
+        - file: notebooks/chapters/08_mcp.ipynb
+        - file: notebooks/chapters/09_skills.ipynb
+        - file: notebooks/chapters/10_plugins.ipynb
+        - file: notebooks/chapters/11_guardrails_approvals.ipynb
+    - title: 사내 배포·운영
+      children:
+        - file: notebooks/chapters/12_self_hosted.ipynb
+        - file: notebooks/chapters/13_hooks_telemetry.ipynb
+        - file: notebooks/chapters/14_operations.ipynb
+    - title: Multi-agent 종합 실습
+      children:
+        - file: notebooks/chapters/15_multi_agent.ipynb
+    - title: 보충 자료
+      children:
+        - file: docs/extensions/function-tool-actions.md
+        - file: docs/extensions/builtin-skills.md
+    - title: 실습 도움말
+      children:
+        - file: docs/colab.md
+        - file: docs/validation.md
+        - file: docs/troubleshooting.md
+site:
+  title: Agents API 실습 가이드
+  template: book-theme
+  options:
+    logo_text: Agents API 실습 가이드

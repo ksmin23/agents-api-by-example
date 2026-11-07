@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "source": "notebooks/chapters/01_concepts.ipynb",
+  "language": "en",
+  "glossary_sha256": "52433c24e8c1a4bceb9ce80bfc4df53475c4cc7d646c1fd88be88f7db4ec7950",
+  "review_status": "machine-translated; structure checked; cross-chapter learning flow reviewed; live-execution and plain-English wording reviewed",
+  "units": {
+    "intro-01-00": {
+      "source_sha256": "9c3aee8234c7c9254ebac4c85731d1f0e7568a8c60c6593dc8d3ac5b2949efeb",
+      "text": "# Chapter 1. Core Concepts of the Agents API\n\nInspect the shared sales.csv input and expected JSON structure, then connect Agent, Session, Turn, Environment, and Harness to a request. Run this chapter locally without API keys or model configuration. It does not validate API access or successful remote analysis.\n"
+    },
+    "intro-01-01": {
+      "source_sha256": "521877e7f3e331b600c7a6ddb764f274863dd79b195f2c453a9398e41765ddb3",
+      "text": "<!-- colab-link -->\n[Standalone notebook download instructions](../../docs/colab.md) · For upload to Colab\n"
+    },
+    "3fe115e4f513": {
+      "source_sha256": "bc05290d710277421825f6a97ecfaab82fb3fd982bfdad251317fbb74011b7c9",
+      "text": "## Learning Guide\n\nRun from top to bottom: input structure → response format → components → request preview → environment choices. This chapter neither computes aggregate CSV answers nor creates a Session.\n\n| Learning stage | Purpose | Related exercise |\n| --- | --- | --- |\n| Quickstart | Experience creation, streaming, and cleanup with a small task | [Quickstart](../quickstart.ipynb) |\n| Chapter 1 | Understand data, terminology, and request/result structure | This notebook |\n| Chapter 2 | Send CSV in a message and inspect a text JSON response | [First CSV Analysis](02_first_agent.ipynb) |\n| Chapter 5 | Work with input files and download result Artifacts | [Files and Artifacts](05_files_artifacts.ipynb) |\n\nAfterward, explain where models and instructions are configured, what another Turn in the same Session means, where Python runs, and how JSON responses differ from result files.\n\nEach chapter is an independent capability exercise using the same data. See the [shared learning and exercise guide](../../docs/validation.md) for learning routes and changing inputs/outputs.\n"
+    },
+    "4ca303a3bf7d": {
+      "source_sha256": "bb63dda178568d77b7a33ddff2be50d999f103daee0bccd193510ea74a017b11",
+      "text": "### How a Request Runs\n\nWhen the application submits work, a Turn starts within the Session and the Harness drives the model and tool loop. Commands run in an Environment when code or files are needed, while the application receives events and results.\n\n```mermaid\nflowchart LR\n    A[Application] -->|agent + environment + input| H[Agents API Harness]\n    H -->|commands| E[Environment]\n    E -->|command results| H\n    H -->|events and final result| A\n```\n\nThe diagram explains responsibilities, not HTTP call order or the complete API schema. In Chapter 2, notebook Python plays the application role. Official reference: [Architecture](https://developers.openai.com/api/docs/guides/agents-api/architecture).\n"
+    },
+    "4b305fc4": {
+      "source_sha256": "4ff0b3660b61fffac0611d521f2f1dc3983f549d16962409a05b0fec17f894df",
+      "text": "**Exercise scope:** All code inspects local inputs or previews request data. Chapter 2 covers API creation, events, remote results, and cleanup. Passing a separate offline validator does not establish successful API execution. [Exercise Guide](../../docs/validation.md)\n"
+    },
+    "intro-01-02": {
+      "source_sha256": "62ca571bdcfa5f396fb3e41dd548e2001b9da73b754ca6eb39357f890e1cde02",
+      "text": "## 0. Prepare the Local Exercise\n\nLocally, run uv sync --locked and uv run jupyter lab from the repository root, then select the .venv kernel. In Colab, upload the standalone notebook and run the bundled-file preparation cells. No API key or model configuration is needed for this chapter.\n\nSee [Environment Setup](../setup.ipynb) for installation and kernel issues. The code below reads the shared CSV from the repository or temporary Colab workspace without creating an API client.\n"
+    },
+    "intro-01-05": {
+      "source_sha256": "19faf3589b1457aa470239b18a33944abeeb4a474fafdea19ae0d37ffeaa1a1c",
+      "text": "## 1. Inspect the Input CSV Structure\n\nEach row is a transaction with a date, product, quantity, and unit price. Per-row revenue is quantity × unit_price. Dates and products group the data; quantity and unit price are calculation inputs. Amounts are exercise integers; do not add taxes, refunds, or currency conversion absent from the input.\n\nInspect the CSV text, column names, and first row below. Do not calculate totals or product aggregates yet. Explain the first row before moving to the response format.\n"
+    },
+    "intro-01-07": {
+      "source_sha256": "7451487814ea3a06c188bd3d361ce546e60e2722eea97f3c9c209a5b50c67337",
+      "text": "## 3. Agent · Session · Turn · Environment · Harness\n\n| Component | Role | Meaning in this example |\n| --- | --- | --- |\n| Agent configuration | Specify model, instructions, tools, and behavior | Sales analyst instructions requiring Python calculations |\n| Session | State for continuing conversations and work | A continuing conversation about the same CSV |\n| Turn | A unit of work initiated by input | Overall sales analysis, then a daily-analysis request in another Turn |\n| Environment | Execution environment for commands, code, and files | Sandbox that reads the CSV and runs Python |\n| Harness | Coordinate the model and tool loop | Decide the next calculation, command, or response |\n\nAgent configuration can be supplied directly when creating a Session; a separate stored Agent resource is not required first. [Chapter 4](04_agent_configuration.ipynb) demonstrates stored Agent reuse. Requesting more work in the same Session creates another Turn, which differs from creating a new Session.\n\nOpenAI operates the Agents API Harness. environment.type selects the command execution environment. This does not automatically replace application-side external functions, business authorization, or human approval.\n"
+    },
+    "intro-01-09": {
+      "source_sha256": "8d7f6030785977375f5156d121c0735d342f50fcdfd4d666cf751c22e3f0322c",
+      "text": "## 6. Distinguish the Responses API, Agents SDK, and Agents API\n\n| Option | What the application mainly manages | Python entry point |\n| --- | --- | --- |\n| Responses API | Requests, conversation continuity, and tool execution flow | client.responses |\n| Agents SDK | An agent loop executed in the application | Agent, Runner |\n| Agents API | Submit work to managed Sessions and handle events/results | client.beta.agents |\n\nThis course uses client.beta.agents in the OpenAI Python SDK. from agents import Agent, Runner belongs to the separate Agents SDK. Do not transplant SDK Guardrail decorators into Agents API fields. Chapter 11 covers business validation and approval workflows.\n\nOperating a Codex App Server directly is not a prerequisite for this introductory course. First distinguish this course's API interface and the responsibilities of the application, Harness, and environment.\n"
+    },
+    "intro-01-10": {
+      "source_sha256": "32177203f98d22792bccb85a82499c07e5142840c71e4b4a6cccb5013867e41d",
+      "text": "## 2. Response JSON Structure and Result Files\n\nThe output contract defines fields, types, and meanings rather than calculated answers. Chapter 2 parses the model's final text as JSON. Parseable JSON alone does not establish correct calculations or actual Python execution.\n\n| Field | Meaning | Type |\n| --- | --- | --- |\n| row_count | Transaction row count | Integer |\n| total_quantity | Total units sold | Integer |\n| total_revenue | Sum of quantity × unit price across rows | Integer |\n| by_product | Revenue keyed by product name | Object: product → integer |\n\nChapter 5 creates summary.json and report.md in the sandbox and downloads them as Artifacts. JSON and Markdown can express the same numbers, but response text, sandbox files, and local downloads are different objects. This chapter creates no output files. Expected results calculated from the CSV and detailed content checks belong to the separate validation tools.\n"
+    },
+    "intro-01-12": {
+      "source_sha256": "8a6aafc8c45da3642b7e7fdaf0c0278d3c95b36a5ce7f365805817ab36459b0b",
+      "text": "## Self-Check and the Next Chapter\n\nAnswer these questions before continuing to [Chapter 2: Run a CSV Analysis Agent](02_first_agent.ipynb).\n\n| Question | Concept to check |\n| --- | --- |\n| Where do the model and analysis instructions go? | agent.model and agent.instructions |\n| What starts when another analysis is requested in the same Session? | Another Turn, distinct from a new Session |\n| Where does Python read the CSV? | In the openai_hosted Environment for this example |\n| Does stream=True guarantee correct calculations? | Progress observation is separate from completion and correctness checks |\n| Is response JSON the same as downloading summary.json? | Response text, sandbox files, and local files are distinct |\n\nComplete this chapter by explaining CSV structure, response fields, request locations, and execution responsibilities. No remote resources are created, so Session cleanup is unnecessary. Passing local checks does not validate API execution.\n"
+    },
+    "refs-28ff151f4033": {
+      "source_sha256": "a7043b28d67ee95006828b44afc9257f5740fa97a2a676f64a15d1c4c0ca77de",
+      "text": "## Official References\n\n### Agents API-Specific Documentation\n\n- [Agents API overview](https://developers.openai.com/api/docs/guides/agents-api/overview) — Agents API concepts and the role of the managed Harness.\n- [Architecture](https://developers.openai.com/api/docs/guides/agents-api/architecture) — Division of responsibilities among the Harness, application, and environment.\n\n### Supplementary Materials — Shared Documentation\n\n- [Agents — Runtime Comparison](https://developers.openai.com/api/docs/guides/agents#compare-agent-runtime-options) — A shared guide comparing execution approaches, including the Agents API and Agents SDK.\n\nLinks checked: 2026-11-03. Checking documentation links is separate from validating API exercise execution.\n"
+    },
+    "01-request-guide": {
+      "source_sha256": "b6af34fce898528fb648c1cfef7cc8e706ec498671313646e430622ce5930c1f",
+      "text": "## 4. Preview the Request Configuration\n\nThe following request data connects agent, environment, input, and stream as used in Chapter 2. The model ID is an illustrative placeholder. This cell creates neither a client nor a Session and sends no API request. Model selection and authentication are configured during Chapter 2 preparation.\n\n| Concept | Request location |\n| --- | --- |\n| Model and instructions | agent.model, agent.instructions |\n| Python execution location | environment.type |\n| Work request and CSV | input |\n| Observe progress through events | stream |\n\nstream=True selects progress observation; it does not establish successful work, correct calculations, or file creation. Chapter 2 connects this configuration to actual creation and completed-state checks.\n"
+    },
+    "01-environment-guide": {
+      "source_sha256": "df5b722d05c49a4814035edf388ba888ff9d872abef37626eb0ecf78c6f45d7c",
+      "text": "## 5. Choose an Execution Environment\n\nThe fragments below compare environment types; they are not complete Session creation or connection code.\n\n| Environment | When to choose it | Later exercise |\n| --- | --- | --- |\n| none | Respond or use external tools without sandbox commands or files | Concept comparison |\n| openai_hosted | Run Python and file work in an OpenAI-managed sandbox | Default path from Chapter 2 onward |\n| self_hosted | Connect execution infrastructure with private networks or packages | Chapter 12 |\n\nnone can still use external tools, but provides no built-in sandbox Bash or workspace files. self_hosted connects your execution environment rather than making you operate the Harness. See [Chapter 12](12_self_hosted.ipynb) for connection and lifecycle management.\n\nSubagents in [Chapter 15: Multi-agent](15_multi_agent.ipynb) also share the environment filesystem. Creating a subagent does not imply creating a separate sandbox.\n"
+    }
+  }
+}

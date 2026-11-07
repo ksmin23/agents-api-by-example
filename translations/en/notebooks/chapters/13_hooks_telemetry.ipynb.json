@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "source": "notebooks/chapters/13_hooks_telemetry.ipynb",
+  "language": "en",
+  "glossary_sha256": "52433c24e8c1a4bceb9ce80bfc4df53475c4cc7d646c1fd88be88f7db4ec7950",
+  "review_status": "machine-translated; structure checked; cross-chapter learning flow reviewed; live-execution and plain-English wording reviewed",
+  "units": {
+    "0ce0651f": {
+      "source_sha256": "f8790376890cadf011f55fa6f67882c058f0f7cd000755e33352f2748efc0eac",
+      "text": "# Chapter 13. Observing Execution with Hooks and Telemetry\n\nAttach application observability to an OpenAI-hosted CSV report run.\n\n| Connection | This chapter |\n| --- | --- |\n| Shared example | Sales analysis of the same sales.csv |\n| New capability | Actual API callbacks, OTel spans, and optional Trace investigation |\n| Exercise composition | OpenAI-hosted default run + in-memory OTel · optional Collector/local Hook |\n"
+    },
+    "fdaeb29b": {
+      "source_sha256": "e81095b8156964d48c36fe7d8ea5ebd348c33646aecda499bc43558a78a0703f",
+      "text": "<!-- colab-link -->\n[Standalone download instructions](../../docs/colab.md) · Read-only · Exercises use local Python with optional Docker\n"
+    },
+    "5821b26cf7be": {
+      "source_sha256": "d279f5148e173820168671649d767fadf862ca05b873401900c5d7cd7907e1d2",
+      "text": "## Learning Guide\n\nChoose what to observe in the CSV-report workflow. Connect real API events to application callbacks and OTel spans, and inspect the default API Trace in the Dashboard or optional export when needed. Run independently of earlier sessions and kernels.\n\n| Question | Record to inspect |\n| --- | --- |\n| Which tools/commands did the model run? | Default API Trace and Items |\n| Which events did the application handle? | Callback records |\n| Were actual spans created/delivered? | In-memory OTel exporter or Collector |\n| How is SessionStart input processed? | Separate local Hook protocol replay |\n\nDefault to API plus in-memory OTel; Docker and Trace export are optional. Native Codex dispatch, actual billing, and Dashboard UI inspection have separate validation scope. Default API Trace and app spans are different records. [Exercise guidance and validation scope](../../docs/validation.md)\n"
+    },
+    "8c2726c8": {
+      "source_sha256": "674df1ec90ceb36110c44b09cbafe4a54ab9dbfe68c2f65023c75d308ce0c6e7",
+      "text": "**Exercise guide:** Run each chapter independently in a fresh kernel. See the [shared learning and exercise guide](../../docs/validation.md) for execution modes, response/file differences, and validation records.\n"
+    },
+    "a8a45d20": {
+      "source_sha256": "d6be0814e91ae17c18105df8fb6f1b0aeb3fefc5c09935a58dde3739b2d3dfa7",
+      "text": "## 0. Execution Modes\n\nRun top to bottom in the local uv environment. The three execution switches and EXPORT_TRACES default to False. Colab is for reading; execute locally in Python with optional Docker.\n\n| Path | RUN_LIVE | RUN_DOCKER | RUN_LOCAL_CHECKS |\n| --- | --- | --- | --- |\n| API plus in-memory OTel | True | False | False |\n| API plus Collector only | True | True | False |\n| Separate local checks only | False | True | True |\n\nSelect EXPORT_TRACES independently for either API path. For local checks alone, skip API preparation and all six stages. Enabling both paths runs local checks in a separate worker after API cleanup.\n\n```bash\nuv sync --locked --group telemetry\n# Live API with in-memory application spans.\nuv run --group dev python scripts/run_deployment.py --chapter 13 --live\n# Live API with a Collector, without local Hook replay.\nuv run --group dev python scripts/run_deployment.py --chapter 13 --live --docker\n# Separate local checks; no Agents API calls.\nuv run --group dev python scripts/run_deployment.py --chapter 13 --docker --build\n# Optional API Trace export; not another model task.\nTUTORIAL_EXPORT_TRACES=1 uv run --group dev python scripts/run_deployment.py --chapter 13 --live\n```\n\nCLI --docker alone enables RUN_LOCAL_CHECKS in the execution copy. --live --docker uses only the Collector. Offline validation skips both API and Docker.\n\n\nFor manual in-memory observation in Jupyter, install with `uv sync --locked --group telemetry`, then launch `uv run --group telemetry jupyter lab`. Use `uv run --group telemetry-otlp jupyter lab` for optional Collector delivery. The dev group used by validation commands includes observation and Collector test dependencies. Standalone Colab adds only the in-memory observation SDK, without the HTTP exporter. Chapters 12–14 remain read-only in Colab.\n"
+    },
+    "maf8c6e99f947": {
+      "source_sha256": "271800ed8c8c6690907693a85dbff71d8f06da72cdbeba8f97785a3525f99109",
+      "text": "### Roles of the Observation Libraries\n\nKeep API calls in source cells. Helpers handle Docker preparation, OTLP transport, JSONL decoding, and cleanup. ApplicationHooks adapts caller-side events; it is neither an API-native Hook setting nor a model-execution recorder.\n"
+    },
+    "mb1112d3723a6": {
+      "source_sha256": "fb82fc5cf262e2abde3a40be943fecaa6864e3b3de00c65634d2f52d1f6701f9",
+      "text": "### Input Bytes and Optional Settings\n\nRead and send the CSV's original bytes. Validate optional export attempts and intervals during preparation; per-request HTTP timeout is not a total deadline. Keep absent usage unknown rather than manufacturing zeros.\n"
+    },
+    "7624205f": {
+      "source_sha256": "00ff608c7ebb89cc94c17985f73bbcdac9af035382c9882467beeff310527e43",
+      "text": "## 1. Preparing API Requests\n\nYou will directly execute API requests, streaming, file downloads, and resource cleanup. Answer comparisons and validation records are handled by a separate validation tool.\n"
+    },
+    "b28b316a": {
+      "source_sha256": "6f68cd72a610c496f9634c72df63800154cbb44a888e97e77d27207054d10495",
+      "text": "## 2. Distinguish API Execution from Observation\n\n```text\nAgents API events → event.type branch → hooks.emit → application OTel span\n                                            ↘ callback records\nAgents API default Trace → Dashboard / optional Trace export\n```\n\nhooks.records records application handling, not delivery evidence. Read actual in-memory exporter/Collector spans separately. App OTel Trace IDs do not automatically match API Trace IDs; correlate through Session and Turn attributes.\n\nEach hooks.emit creates a short event span, not a span covering the whole model task. The duration_ms attribute measures API creation and streaming, excluding between-cell review and downloads. A status attribute also differs from the OTel span's internal status code.\n\nThe app allowlist filters only callback/span metadata. It does not sanitize default API Trace or exports, which may include recorded inputs and outputs. [Official Tracing](https://developers.openai.com/api/docs/guides/agents-api/tracing)\n\nSequence: prepare observation → execute API → read report → inspect actual app spans → optionally inspect/export API Trace → clean up. Run stage 6 when stopping midway.\n"
+    },
+    "mc1f708c7ad15": {
+      "source_sha256": "ca20c44f56c696644d9824e7562ea2c7b8f12fb370e62d4ed9be1a6d21f0607e",
+      "text": "#### Enable Live API Execution\n\nSelect `RUN_LIVE=True` in the configuration cell, then run this preparation cell. With the default False setting, execution stops here with an error message. Subsequent API cells do not repeat the execution-mode conditional. The `requires_api` tag is for the offline validator, not Jupyter's own access control.\n"
+    },
+    "13-state-guide": {
+      "source_sha256": "ecc7891309a4290b1d3a436117f486bfb970b3e487a50fed56c782dc054c6e13",
+      "text": "### Prepare State for This Run\n\nInitialize once with a new client. Reinitializing midway can lose session/Collector identifiers. Stage 1 does not reset state and blocks duplicate telemetry preparation; stage 2 allows one session creation per run. After errors or cleanup, use a fresh client and state.\n"
+    },
+    "13-step-1-guide": {
+      "source_sha256": "9b992907d6b07dd5c6df3b6ae8dc2be4001d88893167199b9b1e80d327e6d607",
+      "text": "### 1. Prepare Observation Resources\n\nUse the initialized run state to prepare the in-memory OTel provider. In Docker mode, start the Collector too, without running the Agent yet. Prepare resources once per run. Run cleanup in stage 6 if stopping midway.\n"
+    },
+    "13-failure-guide": {
+      "source_sha256": "34821de89e57fd219104b23f8194f4fad2d965d0b9a8ebc146965d79a1562bfe",
+      "text": "### Interpret Failure Records\n\nRecord turn.failed only when the API reports a root-Turn failure event. Local API-call/file-handling errors produce report.failed with local_error, not a claim of remote task failure. An observation timeout also does not prove remote failure. Preserve the original error and cleanup if failure recording itself fails. Do not add error bodies or prompts to spans.\n"
+    },
+    "13-step-2-guide": {
+      "source_sha256": "540aff829aabf32c965a806a0153f3355bb4f1aadde72ed3ba815438910e7875",
+      "text": "### 2. Run the Agent and Connect Events\n\nWait for the API analysis result; no user input is required. Find where event.type dispatch records session.created and root turn.completed separately through hooks.emit. Text deltas are displayed but not sent as Telemetry content.\n"
+    },
+    "13-step-3-guide": {
+      "source_sha256": "c9a3e80c284ba91902ab0d0a625add6d714b12194504d4166127aabc5d18efe9",
+      "text": "### 3. Inspect Results and Download the Report\n\nRetrieve the completed Turn and usage, then download the report. Open the printed file path and review it before continuing. usage=None means unreported, not zero. duration_ms measures session creation and streaming in cell 2; time reviewing between cells and downloading files is excluded.\n"
+    },
+    "13-step-4-guide": {
+      "source_sha256": "8187b6265badcd36d3fc9a47670e629820d03d4e30f87c9252476be326760ec7",
+      "text": "### 4. Read Callback Records and Actual App Spans\n\nRead callback names, run/session/turn IDs, status, duration, and usage, then compare actual spans. Flush drains pending delivery without closing the provider; shut it down in stage 6. Read the actual memory exporter by default or decode Collector JSONL in Docker mode.\n\nApp Trace IDs and Span IDs are actual OTel identifiers, not automatically linked API Trace IDs. Correlate through session_id/turn_id attributes. Do not treat missing received spans as successful observation. This stage does not request API Trace export.\n"
+    },
+    "13-step-5-guide": {
+      "source_sha256": "129bd01016c86774c4a96d2d08c76469515683594101ba7d5bfc3eb07cf1490a",
+      "text": "### 5. Optionally Inspect or Export Default API Trace\n\nEXPORT_TRACES defaults to False: show Dashboard URL and Session ID without calling the Trace API. Inspect the same project, Session, and Turn in Logs → Agents before cleanup. Do not add an input wait.\n\nWhen True, query the Trace API. limit=20 is a page size; SDK iteration reads later pages too. timeout=15 limits each request, while retry count/interval do not impose a total deadline. Queries do not submit another model task. Export requires organization enablement and project read permission; Trace may become ready after the answer. [Official export](https://developers.openai.com/api/docs/guides/agents-api/tracing#export-session-traces)\n\n| Status | Interpretation |\n| --- | --- |\n| not_requested | Not selected; normal for the default exercise |\n| exported | OTLP containing actual spans saved |\n| not_ready | No data/spans obtained within bounded queries; do not infer absence or zero usage |\n| unavailable | Query or storage error; inspect stage and error type |\n\nShow Trace object count separately from actual span count. Save through a temporary file and replace on success. Preserve a previous successful file on later errors; distinguish current status from the last successful file. Export/UI results are independent of analysis success. Always clean up. The app filter does not sanitize API Trace/export inputs and outputs.\n"
+    },
+    "13-step-6-guide": {
+      "source_sha256": "2c48b873721f43c6debb8e401ce86c77838f1ac431c356417330d523d6f58ed4",
+      "text": "### 6. Clean Up Resources and View the Final Summary\n\nAlways run this cell at the end. It cleans up the session, OTel, and optional Docker resources even if you completed only some steps. In the normal path, inspect the Collector in cell 4 before shutdown; the validation runner checks results and records Docker evidence in this cell before deletion. Earlier steps attempt cleanup on errors or user interruption, but cannot guarantee cleanup after forced kernel termination. After an error, inspect the state and prepare a fresh run.\n"
+    },
+    "6c77f075": {
+      "source_sha256": "c4a2a74f200bc5eba75bfa58ae27519a8e4ee068a509863cdc388f0275233f47",
+      "text": "## 3. Optional Local Checks: OTLP and Hook Protocol Replay\n\nRun only when RUN_DOCKER and RUN_LOCAL_CHECKS are both True. Separately from API plus Collector, transmit a worker's Skill callbacks and pass SessionStart JSON directly to stdin. This is not evidence of native Harness dispatch. Use separate local_hooks/local_traces variables so API records remain intact. This does not export full source, errors, or prompts.\n"
+    },
+    "ce1bb5c4": {
+      "source_sha256": "a5d3e691575a9868f86a7a93b4c708807a5f9e33ba70c4ed0d59b85a8062750b",
+      "text": "## 4. Checking Managed Configuration and Allowed Fields\n\nThis TOML example is for a separate managed Codex environment. It is not uploaded as Agents API configuration. Native dispatch support, policies, and the Codex version must be validated separately in that deployment."
+    },
+    "1c7dcf96": {
+      "source_sha256": "5afa169a6eae3b3e78b31a434a02e6951a3fcdcb3462732bcdfa29671c4a38c0",
+      "text": "## Completion Criteria and the Next Chapter\n\nDistinguish callback records, actual app spans, default API Trace, export, and separate native Hook protocol replay. Read matching Session/Turn IDs, actual reception, None versus zero usage, span duration versus duration_ms, and analysis success versus export errors separately.\n\n[Chapter 14: Observer reconnection](14_operations.ipynb) checks recovery through the original Session, Turn, saved Items, and files. It differs from app OTel and does not require additional Trace export. See [exercise guidance and validation scope](../../docs/validation.md). Automated validation does not inspect the actual Dashboard UI.\n"
+    },
+    "refs-33ccadf24589": {
+      "source_sha256": "08029723fa6ae1976223261c358fea23f0286353d9e1ef3c3e9ffd47b61f9e12",
+      "text": "## Official References\n\n### Agents API Documentation\n\n- [Observability and usage](https://developers.openai.com/api/docs/guides/agents-api/observability) — Execution records, Dashboard, Turn usage, and interpreting costs.\n- [Tracing](https://developers.openai.com/api/docs/guides/agents-api/tracing) — Session, Turn, Span, Trace readiness delays, and OTLP JSON export.\n- [Events and items](https://developers.openai.com/api/docs/guides/agents-api/sessions/events) — Event streams, completion statuses, and querying stored items and turns.\n\nThe documents above cover Agents API observability. Application callbacks, OTel transmission code, and separate Codex Hook configuration are kept distinct.\n\n### Supplementary Resources — Codex Documentation\n\n- [Codex Hooks](https://learn.chatgpt.com/docs/hooks) — Explains SessionStart and requirements.toml in a separate Codex environment. These are distinct from this notebook's API event callbacks; stdin protocol replay must not be interpreted as validation of Agents API native Hook dispatch.\n\nLinks checked: 2026-11-03. Checking documentation links is separate from validating API exercise execution.\n"
+    }
+  }
+}

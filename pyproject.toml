@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tutorial_helpers"]
+
+[project]
+name = "agents-api-by-example"
+version = "0.1.0"
+description = "한국어 Agents API 실습 교재 — Jupyter Book, Notebook, Colab, uv"
+requires-python = ">=3.11"
+dependencies = [
+  "openai>=3.42.1,<4",
+  "python-dotenv>=1,<2",
+]
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true
+
+[dependency-groups]
+notebook = ["ipykernel>=6,<8", "jupyterlab>=4,<5"]
+dev = [
+  "mcp==1.26.0",
+  "nbclient>=0.10,<1",
+  "nbformat>=5.10,<6",
+  {include-group = "telemetry-otlp"},
+]
+telemetry = ["opentelemetry-sdk>=1.39,<2"]
+telemetry-otlp = [
+  {include-group = "telemetry"},
+  "opentelemetry-exporter-otlp-proto-http>=1.39,<2",
+]
+proxy = ["httpx2[socks]>=2,<3"]
+docs = ["jupyter-book>=2,<3"]
+
+[tool.uv]
+package = true
+default-groups = ["notebook"]
