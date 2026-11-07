@@ -196,8 +196,8 @@ uv run --group dev python scripts/check_colab.py --execute
 - 10장. Plugins로 Skill과 MCP 묶어 배포하기 · `chapters/10_plugins.ipynb` · Colab 업로드용
 - 11장. Guardrails와 사람의 승인 구현하기 · `chapters/11_guardrails_approvals.ipynb` · Colab 업로드용
 - 12장. Self-hosted 환경과 사내 패키지 설치 · `chapters/12_self_hosted.ipynb` · 읽기용 · 실습은 로컬 Docker
-- 13장. Hooks와 Telemetry로 실행 관측하기 · `chapters/13_hooks_telemetry.ipynb` · 읽기용 · 실습은 로컬 Docker
-- 14장. 장애·복구와 운영 관리 · `chapters/14_operations.ipynb` · 읽기용 · 실습은 로컬 Docker
+- 13장. Hooks와 Telemetry로 실행 관측하기 · `chapters/13_hooks_telemetry.ipynb` · 읽기용 · 실습은 로컬 Python·선택 Docker
+- 14장. 장애·복구와 운영 관리 · `chapters/14_operations.ipynb` · 읽기용 · 실습은 로컬 Python·선택 Docker
 - 15장. Multi-agent로 매출 분석을 분담하고 보고서 통합하기 · `chapters/15_multi_agent.ipynb` · Colab 업로드용
 <!-- colab-links:end -->
 

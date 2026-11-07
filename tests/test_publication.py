@@ -59,6 +59,12 @@ class PublicationTests(unittest.TestCase):
                 return next(''.join(c['source']) for c in nb['cells'] if ''.join(c['source']).startswith('<!-- colab-link -->'))
             self.assertIn('Colab 업로드용',marker(ordinary))
             self.assertIn('실습은 로컬 Docker',marker(docker))
+            for name in ['13_hooks_telemetry', '14_operations']:
+                path = root / 'notebooks/chapters' / (name + '.ipynb')
+                notice = '읽기용 · 실습은 로컬 Python·선택 Docker'
+                self.assertIn(notice, marker(json.loads(updates[path])))
+                self.assertIn('`chapters/' + name + '.ipynb` · ' + notice,
+                              updates[root / 'README.md'])
             self.assertIn('../../docs/colab.md',marker(ordinary))
             self.assertNotIn('colab.research.google.com/github',marker(ordinary))
             for p,body in updates.items():p.write_text(body)

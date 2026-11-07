@@ -24,8 +24,11 @@ def render_updates(root: Path, repository: str | None, ref: str) -> dict[Path, s
     paths = (p for p in (root / 'notebooks').rglob('*.ipynb') if '.ipynb_checkpoints' not in p.parts)
     for path in sorted(paths, key=notebook_order):
         notebook = json.loads(path.read_text())
-        local_only = notebook.get('metadata', {}).get('tutorial', {}).get('execution') == 'local_docker'
+        tutorial = notebook.get('metadata', {}).get('tutorial', {})
+        local_only = tutorial.get('execution') == 'local_docker'
         label = '읽기용 · 실습은 로컬 Docker' if local_only else 'Colab 업로드용'
+        if local_only and tutorial.get('chapter') in {13, 14}:
+            label = '읽기용 · 실습은 로컬 Python·선택 Docker'
         guide = relpath(root / "docs/colab.md", path.parent).replace("\\", "/")
         link = f'<!-- colab-link -->\n[독립 실행본 다운로드 안내]({guide}) · {label}\n'
         if not path.name.startswith('_'):
