@@ -36,7 +36,7 @@ uv run jupyter lab
 
 노트북은 기본 `RUN_LIVE=False`·`RUN_DOCKER=False`입니다. 실제 API는 노트북의 `RUN_LIVE=True` 또는 실행 도구의 `--live`로 선택하며, 모델·sandbox 사용에는 비용이 발생합니다. Docker 실습은 별도로 활성화합니다.
 
-일반 Jupyter에서 기본값으로 **모두 실행**하면 API 준비 셀에서 안내 오류와 함께 멈춥니다. 설정 셀의 `RUN_LIVE=True`를 적용한 뒤 준비 셀부터 순서대로 실행하세요. 준비 셀에서만 실행 허용을 확인하고, 이후 셀은 API 호출·결과 처리·`finally` 정리를 직접 보여줍니다. `requires_api` 태그는 검증기에서 API 준비·실행·결과 의존 셀을 건너뛰는 기준이며, Jupyter 자체에서 셀 실행을 막지 않습니다.
+API를 사용하는 노트북을 일반 Jupyter에서 기본값으로 **모두 실행**하면 API 준비 셀에서 안내 오류와 함께 멈춥니다. 설정 셀의 `RUN_LIVE=True`를 적용한 뒤 준비 셀부터 순서대로 실행하세요. 준비 셀에서만 실행 허용을 확인하고, 이후 셀은 API 호출과 결과 처리를 직접 보여줍니다. 빠른 시작은 실행·결과 확인·정리를 같은 셀의 `try/finally`로 처리합니다. 여러 셀로 나뉜 장은 중간에 학습을 멈추더라도 마지막 정리 셀까지 실행하세요. 강제 커널 종료 시 자동 정리는 보장되지 않습니다. `requires_api` 태그는 검증기에서 API 준비·실행·결과 의존 셀을 건너뛰는 기준이며, Jupyter 자체에서 셀 실행을 막지 않습니다.
 
 ```bash
 # 키 없이 로컬 준비·정의·계산 셀만 새 커널에서 실행
@@ -101,6 +101,8 @@ CSV 입력 → Python 분석 → JSON·Markdown 보고서
 | 사내 배포·운영까지 | 1–11장 → 12–14장 → 15장 |
 | Multi-agent 먼저 | 3·5장 → 15장 |
 
+아래 표는 노트북을 직접 실행할 때 읽거나 확인하는 결과입니다. 기준 정답·실행 명령·산출물 내용의 자동 대조는 [검증과 실제 실행 명령](#검증과-실제-실행-명령)의 별도 도구로 수행합니다.
+
 ### 준비와 첫 실행
 
 | 단계 | 장 제목·실행 노트북 | 소개할 내용 | 실습 결과·확인 항목 |
@@ -115,11 +117,11 @@ Agent·Session·Turn·Environment를 이해하고 CSV 분석부터 파일·설�
 | 단계 | 장 제목·실행 노트북 | 소개할 내용 | 실습 결과·확인 항목 |
 | --- | --- | --- | --- |
 | 1장 | [Agents API 핵심 개념](notebooks/chapters/01_concepts.ipynb) | Agent·Session·Turn·Environment의 역할, 입력·출력·실행 환경의 구분 | CSV 입력·반환 필드·미전송 요청 구성 확인; API 호출 없음 |
-| 2장 | [CSV 분석 에이전트 실행](notebooks/chapters/02_first_agent.ipynb) | CSV를 메시지로 전달, `sessions.create`, 스트리밍 이벤트·최종 결과 수집 | 실제 Python 명령과 최종 집계 JSON 일치, 소유 세션 정리 |
+| 2장 | [CSV 분석 에이전트 실행](notebooks/chapters/02_first_agent.ipynb) | CSV를 메시지로 전달, `sessions.create`, 스트리밍 이벤트·최종 결과 수집 | root Turn 완료 상태·최종 집계 JSON 확인, 소유 세션 정리 |
 | 3장 | [대화 이어가기와 실행 상태 관리](notebooks/chapters/03_sessions.ipynb) | 같은 세션의 후속 입력, `sessions.stream`, Turn·items 이력 조회 | 동일 Session의 서로 다른 2개 Turn, 전체·일별 매출 JSON과 저장 이력 |
 | 4장 | [에이전트 설정과 재사용](notebooks/chapters/04_agent_configuration.ipynb) | 저장 Agent 생성·`agent_id` 재사용·세션별 지침 override | 독립된 두 세션의 결과 비교, 저장 지침 유지, 세션·Agent 삭제 |
-| 5장 | [파일 입력과 결과물 다운로드](notebooks/chapters/05_files_artifacts.ipynb) | `environment.files`, artifacts 조회·다운로드·파일 내용 검증 | 내려받은 `summary.json`·`report.md`와 CSV 기준값 일치 |
-| 6장 | [실행 환경과 의존성 준비](notebooks/chapters/06_environment.ipynb) | `packages`·네트워크·`setup_commands`, pandas 설치와 준비 순서 | 분석 보고서와 `environment.json`, 설치 버전·입력 행 수 확인 |
+| 5장 | [파일 입력과 결과물 다운로드](notebooks/chapters/05_files_artifacts.ipynb) | `environment.files`, artifacts 조회·다운로드·로컬 파일 읽기 | 정확한 Turn·경로의 `summary.json`·`report.md` 다운로드, JSON 파싱·보고서 표시 |
+| 6장 | [실행 환경과 의존성 준비](notebooks/chapters/06_environment.ipynb) | `packages`·네트워크·`setup_commands`, pandas 설치와 준비 순서 | 분석 보고서와 `environment.json` 읽기, pandas 버전 비교·입력 행 수 표시 |
 
 ### 기능 확장: 7–11장
 
@@ -129,8 +131,8 @@ Function Tool → MCP → Skills → Plugins → 애플리케이션 Guardrails·
 | --- | --- | --- | --- |
 | 7장 | [Function Tool로 업무 데이터 연결하기](notebooks/chapters/07_function_tools.ipynb) | 직접 호출하는 `get_sales_target` 함수, 공식 `function_tool`·`.definition`·`tool_handlers`로 등록·실행 | 목표 150,000 조회, 달성률 0.85와 보고서, 저장된 실제 함수 호출 확인 |
 | 8장 | [MCP로 같은 업무 도구 제공하기](notebooks/chapters/08_mcp.ipynb) | 환경 내부 stdio MCP, 도구 허용 목록·초기화·호출 확인 | 같은 목표 조회를 MCP로 수행, MCP 호출 기록과 달성률 보고서 |
-| 9장 | [Skills로 분석 절차와 코드 재사용하기](notebooks/chapters/09_skills.ipynb) | `SKILL.md`·번들 스크립트·inline ZIP·`environment.skills`, 등록된 스킬 목록 조회 | Skill 코드가 만든 보고서와 `skill_evidence.json`, 등록 이름·유형·revision·입력 해시 확인 |
-| 10장 | [Plugins로 Skill과 MCP 묶어 배포하기](notebooks/chapters/10_plugins.ipynb) | Plugin manifest·MCP 설정·ZIP·`environment.plugins`, 의존성 분리 | Plugin에 포함된 Skill 실행과 MCP 호출을 각각 검증한 목표 비교 보고서 |
+| 9장 | [Skills로 분석 절차와 코드 재사용하기](notebooks/chapters/09_skills.ipynb) | `SKILL.md`·번들 스크립트·inline ZIP·`environment.skills`, 등록된 스킬 목록 조회 | Skill 이름·inline 유형 확인, 실행 명령·보고서·`skill_evidence.json`의 revision·입력 해시 읽기 |
+| 10장 | [Plugins로 Skill과 MCP 묶어 배포하기](notebooks/chapters/10_plugins.ipynb) | Plugin manifest·MCP 설정·ZIP·`environment.plugins`, 의존성 분리 | Plugin 등록·Skill 실행 명령·MCP 호출 이력 확인, 목표 비교 보고서 읽기 |
 | 11장 | [Guardrails와 사람의 승인 구현하기](notebooks/chapters/11_guardrails_approvals.ipynb) | 애플리케이션 입력·출력 검증·권한·승인, API `review` 설정의 역할 | 허용하지 않은 채널 거절, 승인된 보고서만 로컬 등록, SHA-256·저장 바이트 대조 |
 
 7장 기본 예제는 공식 SDK가 함수 인자를 검증하고 실행 결과를 제출합니다. `required_actions`·원래 Turn/Call ID로 `tool_result`를 직접 처리하는 방법은 [Function Tool 심화 자료](docs/extensions/function-tool-actions.md)와 11장에서 설명합니다. 별도로 등록하지 않은 Spreadsheets가 등장하는 이유와 목록 확인은 [기본 스킬 보충 자료](docs/extensions/builtin-skills.md)를 참고하세요.
@@ -263,19 +265,21 @@ Colab에서 Preface·2–11장·15장의 실제 API 실습을 실행하려면 Se
 
 ## 실행 과정과 결과 확인하기
 
-각 실행은 최종 응답·Turn 완료 상태·다운로드한 파일을 확인하고 생성한 세션을 정리합니다. 계산값과 실제 파일을 검증하며, 모델의 “완료했다”는 문구만으로 성공을 판단하지 않습니다. 반복되는 설정·metadata·자원 정리는 [공통 코드](src/tutorial_helpers/README.md)에서 처리합니다.
+노트북 직접 실행에서는 장별로 최종 응답·Turn 완료 상태·실행 이력·다운로드한 파일을 읽고, 설정 적용·등록 상태·결과 간 일관성 등을 확인합니다. CSV 기준 정답, 실제 Python 명령, 파일 내용·해시·revision의 상세 대조는 별도 검증 도구가 실행 사본에 추가합니다. JSON 파싱이나 결과 표시와 자동 정답 검사 통과를 구분하세요. 모델의 “완료했다”는 문구만으로 성공을 판단하지 않습니다. 생성한 자원은 각 노트북의 정리 단계까지 실행해 삭제·API상 부재를 확인합니다. 반복되는 설정·metadata·자원 정리는 [공통 코드](src/tutorial_helpers/README.md)에서 처리합니다.
 
 상세 실행 과정은 [Platform → Logs → Agents](https://platform.openai.com/logs?api=agents)에서 Session ID로 찾을 수 있습니다. 일반 장에는 별도 Trace 조회·저장 루프를 넣지 않습니다. [13장](notebooks/chapters/13_hooks_telemetry.ipynb)에서 필요한 경우에만 다음을 선택합니다.
 
 | 선택 | 동작 |
 | --- | --- |
-| `INSPECT_TRACE=True` | 결과 검증 후 세션 삭제 전에 대기; Dashboard 확인 후 Enter로 정리 |
+| Dashboard에서 직접 확인 | Trace 확인 셀에 표시된 Session ID로 Logs → Agents에서 조회한 뒤 정리 셀 실행 |
 | `EXPORT_TRACES=True` | 세션 삭제 전에 API로 Trace 조회·OTLP JSON 저장 시도 |
-| 기본값 | Trace 확인 대기·export 없이 분석 결과 확인과 정리 |
+| `EXPORT_TRACES=False` (기본값) | Dashboard 주소·Session ID만 표시하고 Trace API는 호출하지 않음 |
+
+13장에는 `INSPECT_TRACE` 옵션이나 Enter 입력 대기가 없습니다. Dashboard를 확인하려면 Trace 확인 셀 뒤에서 다음 셀 실행을 멈추고, 확인 후 마지막 정리 셀을 실행하세요.
 
 Trace export에는 조직 활성화와 `api.traces.read` 또는 `api.agents.read` 권한이 필요합니다. Trace 수집 상태는 분석 결과의 정확성·자원 정리 여부와 구분합니다.
 
-실행 사본·다운로드·검증 결과는 Git에서 제외한 `outputs/` 아래에 보관합니다. Preface 결과는 `outputs/quickstart/<run_id>/summary.json`, 각 장 결과는 `outputs/intro`·`outputs/extensions`·`outputs/deployment-api`, Docker 기록은 `outputs/deployment`에 있습니다. 커널 강제 종료로 정리가 중단됐다면 `creation.json`의 고유 metadata와 저장된 ID로 복구합니다. [문제 해결 안내](docs/troubleshooting.md)를 참고하세요.
+복구 기록·다운로드·검증 결과는 Git에서 제외한 `outputs/` 아래에 보관합니다. 직접 실행은 `creation.json` 등 복구 기록과 해당 장의 다운로드 파일을 남깁니다. 검증 도구는 실행 사본에 정답 검사를 추가하고 별도 `summary.json` 검증 기록을 만듭니다. 예를 들어 Preface의 `outputs/quickstart/<run_id>/summary.json`은 `scripts/run_quickstart.py --live`로 검증할 때 생성됩니다. 각 장 결과는 `outputs/intro`·`outputs/extensions`·`outputs/deployment-api`, Docker 기록은 `outputs/deployment`, 검증 실행 사본은 `outputs/*-validation/`에 있습니다. 커널 강제 종료로 정리가 중단됐다면 `creation.json`의 고유 metadata와 저장된 ID로 복구합니다. [문제 해결 안내](docs/troubleshooting.md)를 참고하세요.
 
 ## 실습 실행과 검증 안내
 
@@ -361,7 +365,7 @@ uv run python scripts/build_colab.py --check
 
 ### GitHub·Colab·Pages 설정
 
-저장소 설정은 `ksmin23/agents-api-by-example`, 기준 ref는 `main`입니다. Pages 배포 대상 경로는 `https://ksmin23.github.io/agents-api-by-example/`이며, 현재 라이브 사이트가 게시됐다는 의미는 아닙니다. Publish workflow의 중단 상태는 유지합니다.
+저장소 설정은 `ksmin23/agents-api-by-example`, 기준 ref는 `main`입니다. 교재는 [GitHub Pages](https://ksmin23.github.io/agents-api-by-example/)에 게시되어 있습니다. `.github/workflows/publish.yml`의 `Publish Jupyter Book`은 `main`에 push하면 빌드·검증 후 자동 배포하며, 수동 실행도 지원합니다. GitHub 저장소의 Settings → Pages → Source는 **GitHub Actions**를 사용합니다.
 
 ```bash
 uv run python scripts/configure_repository.py --repository ksmin23/agents-api-by-example --ref main
