@@ -9,6 +9,7 @@ from artifact_common import ROOT, digest, source_state, tree
 from build_colab import build as check_colab
 from build_colab_zip import build as check_zip
 from build_bundles import build as check_bundles
+from build_exercise_zip import build as check_exercise_zip
 from check_book_output import check_output
 from build_colab import render
 from book_languages import check as check_languages
@@ -25,6 +26,7 @@ def check(root=ROOT, target='sites'):
     if 'en' in languages:
         check_translations(root)
     for language in languages:
+        check_exercise_zip(root, check=True, language=language)
         check_colab(root, check=True, language=language)
         check_zip(root, check=True, language=language)
     check_bundles(root, check=True)
@@ -46,6 +48,8 @@ def check(root=ROOT, target='sites'):
                 check_download_links(folder, item['base_url'] + ('/en' if language == 'en' else ''))
             package = root / '_build/packages' / ('colab-notebooks-en.zip' if language == 'en' else 'colab-notebooks.zip')
             assert (folder / 'downloads/colab-notebooks.zip').read_bytes() == package.read_bytes(), 'Book ZIP differs'
+            exercise = root / '_build/packages' / ('exercise-files-en.zip' if language == 'en' else 'exercise-files.zip')
+            assert (folder / 'downloads/exercise-files.zip').read_bytes() == exercise.read_bytes(), 'Exercise ZIP differs'
             colab = root / '_build/colab' / ('en' if language == 'en' else '')
             for path in render(root, language):
                 relative = path.relative_to(colab)

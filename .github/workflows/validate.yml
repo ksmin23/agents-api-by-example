@@ -35,10 +35,19 @@ jobs:
       - run: uv run --no-sync python scripts/check_colab.py --execute --language all
       - name: Check clean public-PyPI installations
         run: uv run --no-sync python scripts/check_installation.py
+      - name: Check extracted exercise archives without API calls
+        run: uv run --no-sync python scripts/check_exercise_zip.py
       - name: Upload standalone Colab notebooks
         uses: actions/upload-artifact@v4
         with:
           name: colab-notebooks
           path: _build/colab/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload complete exercise files
+        uses: actions/upload-artifact@v4
+        with:
+          name: exercise-files
+          path: _build/packages/exercise-files*.zip
           if-no-files-found: error
           retention-days: 30

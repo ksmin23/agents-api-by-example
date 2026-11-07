@@ -15,6 +15,28 @@ ZIP에는 노트북과 전달용 README만 포함합니다. 파일은 현재 교
 
 환경 준비·빠른 시작·1–11장·15장은 Python 실습용입니다. 12–14장의 배포용 파일은 읽기용이며 Docker·사내 네트워크 실습은 로컬 Jupyter에서 수행합니다. `.ipynb`에 API 키를 기록하지 않습니다.
 
+## 전체 실습 파일: 소스와 함께 로컬 실행
+
+[전체 실습 파일 ZIP 다운로드](https://agents-api-by-example.openai.chatgpt.site/downloads/exercise-files.zip)
+
+Colab용 ZIP은 노트북에 helper 코드를 내장합니다. 압축 해제 직후에는 Python 소스 파일이 보이지 않으며, 준비 셀을 처음부터 순서대로 실행하면 임시 폴더에 파일이 생성됩니다. 마지막 준비 셀에서 helper import 성공과 파일 위치를 확인하세요.
+
+전체 실습 ZIP에는 로컬용 원본 노트북, `src/tutorial_helpers/`, 데이터·예제·스킬·플러그인·배포 파일, 의존성 설정이 함께 있습니다. helper를 읽거나 수정하며 실행하려면 이 ZIP을 선택하세요. 압축을 푼 뒤 `agents-api-examples/` 폴더에서 실행합니다.
+
+```bash
+uv sync --locked
+uv run jupyter lab
+```
+
+프로젝트 .venv 커널을 선택하고 `notebooks/setup.ipynb`부터 여세요. 이 노트북은 로컬 프로젝트의 helper를 사용합니다. 패키지 설치에는 인터넷이, 실제 API 실습에는 키·모델·접근 권한이 필요합니다. 자세한 실행 방법과 선택 의존성은 ZIP의 README에 있습니다.
+
+제공자는 Book 빌드 없이도 다음 명령으로 한·영 전체 실습 ZIP을 생성·검증할 수 있습니다. 통합 Book 빌드는 두 다운로드를 함께 배치합니다. CI의 `exercise-files` 산출물에서도 받을 수 있습니다.
+
+```bash
+uv run python scripts/build_exercise_zip.py
+uv run python scripts/build_exercise_zip.py --check
+```
+
 ## 제공자: 로컬에서 생성·전달
 
 ```bash

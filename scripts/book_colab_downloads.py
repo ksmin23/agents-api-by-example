@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from build_colab import build, render
 from build_colab_zip import build as check_zip
+from build_exercise_zip import build as exercise_zip
 
 
 def add_downloads(directory, root=ROOT, language='ko'):
@@ -17,6 +18,7 @@ def add_downloads(directory, root=ROOT, language='ko'):
         raise ValueError("Build the static book first")
     build(root, check=True, language=language)
     check_zip(root, check=True, language=language)
+    exercise_zip(root, language=language)
     source = root / "_build/colab" / ('en' if language=='en' else '')
     files = render(root, language)
     target = directory / "downloads/colab"
@@ -32,6 +34,7 @@ def add_downloads(directory, root=ROOT, language='ko'):
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, destination)
     shutil.copy2(root / '_build/packages' / ('colab-notebooks-en.zip' if language=='en' else 'colab-notebooks.zip'), archive)
+    shutil.copy2(root / '_build/packages' / ('exercise-files-en.zip' if language == 'en' else 'exercise-files.zip'), directory / 'downloads/exercise-files.zip')
     return {"standalone_downloads": len(expected) - 1, "archive": "downloads/colab-notebooks.zip"}
 
 

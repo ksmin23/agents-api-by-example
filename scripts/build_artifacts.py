@@ -14,6 +14,7 @@ from artifact_common import ROOT, fingerprint, source_files, source_state, tree
 from build_colab import build as build_colab, render as render_colab
 from build_colab_zip import build as build_zip
 from build_bundles import build as build_bundles, render_bundles
+from build_exercise_zip import build as build_exercise_zip
 from book_redirects import build_redirects
 from book_colab_downloads import add_downloads
 from check_book_output import check_output
@@ -36,6 +37,7 @@ def build(root=ROOT, target='sites'):
     check_translations(root)
     for language in ["ko", "en"]:
         build_colab(root, language=language); build_zip(root, language=language)
+        build_exercise_zip(root, language=language)
     build_bundles(root)
     existing = root / '_build/manifest.json'
     # Carry over another target only if its inputs and its final bytes still match.
@@ -106,7 +108,7 @@ def build(root=ROOT, target='sites'):
     from artifact_common import digest
     manifest = {'schema_version': 1, 'languages': ['ko', 'en'], 'source': before, 'pages_base_url': page_base,
                 'components': components, 'targets': targets,
-                'packages': {name: digest((root / '_build/packages' / name).read_bytes()) for name in ['colab-notebooks.zip', 'colab-notebooks-en.zip']}}
+                'packages': {name: digest((root / '_build/packages' / name).read_bytes()) for name in ['colab-notebooks.zip', 'colab-notebooks-en.zip', 'exercise-files.zip', 'exercise-files-en.zip']}}
     existing.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
     from check_artifacts import check
     check(root, target)

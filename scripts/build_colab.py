@@ -118,15 +118,15 @@ def render(root=ROOT, language='ko'):
             if source.startswith("<!-- colab-link -->"):
                 if language == 'en':
                     notice = ('<!-- colab-link -->\nStandalone notebook; no GitHub download is required.\n'
-                              + ('Run the preparation cells first. This local exercise requires no API key or model.\n' if local_only else
-                               'Run the preparation cells first. Live API execution requires RUN_LIVE=True and a key/model in Colab Secrets.\n')
+                              + ('Helper code is embedded in this notebook and written to disk by the preparation cells. Run these cells in order from the beginning. This local exercise requires no API key or model.\n' if local_only else
+                               'Helper code is embedded in this notebook and written to disk by the preparation cells. Run these cells in order from the beginning. Live API execution requires RUN_LIVE=True and a key/model in Colab Secrets.\n')
                               + ('Chapters 12–14 are read-only here. Run Docker/private-network exercises locally.\n' if number in {12,13,14} else '')
                               + 'The example code is identical to the Korean source, including instructions that generate Korean reports.\n')
                     c['source'] = notice.splitlines(keepends=True)
                 else:
                     c["source"] = ("<!-- colab-link -->\n독립 실행용 노트북입니다. GitHub 다운로드 없이 실행합니다.\n"
-                    + ("먼저 준비 셀을 실행하세요. 로컬 실습이며 API 키나 모델이 필요하지 않습니다.\n" if local_only else
-                       "먼저 준비 셀을 실행하세요. 실제 API는 RUN_LIVE=True와 Colab Secrets의 키·모델 설정이 필요합니다.\n")
+                    + ("helper 코드는 노트북에 포함되어 있으며 준비 셀 실행 시 생성됩니다. 처음부터 준비 셀을 순서대로 실행하세요. 로컬 실습이며 API 키나 모델이 필요하지 않습니다.\n" if local_only else
+                       "helper 코드는 노트북에 포함되어 있으며 준비 셀 실행 시 생성됩니다. 처음부터 준비 셀을 순서대로 실행하세요. 실제 API는 RUN_LIVE=True와 Colab Secrets의 키·모델 설정이 필요합니다.\n")
                     + ("12–14장은 읽기용입니다. Docker·사내 네트워크 실습은 로컬에서 실행하세요.\n" if number in {12, 13, 14} else "")
                     ).splitlines(keepends=True)
             if c["cell_type"] == "markdown":
@@ -146,12 +146,22 @@ import tempfile
 
 COLAB_ROOT = Path(tempfile.mkdtemp(prefix="agents-colab-")).resolve()
 (COLAB_ROOT / "tutorial.json").write_text('{"standalone": true}', encoding="utf-8")
+for name in list(sys.modules):
+    if name == "tutorial_helpers" or name.startswith("tutorial_helpers."):
+        del sys.modules[name]
 sys.path.insert(0, str(COLAB_ROOT / "src"))
 os.chdir(COLAB_ROOT)
 print("Working directory:", COLAB_ROOT)
 ''', prefix + "-root", ["colab_asset", "hide-input"]))
                 for i, name in enumerate(assets):
                     rewritten.append(file_cell(name, (root / name).read_text(), prefix + f"-{i}"))
+                rewritten.append(cell("code", """from tutorial_helpers import common as tutorial_common
+
+assert Path(tutorial_common.__file__).resolve() == COLAB_ROOT / "src/tutorial_helpers/common.py"
+assert (COLAB_ROOT / "data/sales.csv").is_file()
+print("Exercise files ready:", COLAB_ROOT)
+print("tutorial_helpers:", tutorial_common.__file__)
+""", prefix + "-ready", ["colab_asset"]))
             else:
                 rewritten.append(c)
         exported["cells"] = rewritten
@@ -161,7 +171,7 @@ print("Working directory:", COLAB_ROOT)
     guide = ("# 독립 실행용 Colab 노트북\n\n"
              "이 프로젝트는 OpenAI가 공식 제작하거나 승인한 문서가 아닌 독립적인 학습 자료입니다.\n\n"
              "필요한 .ipynb 하나를 Colab의 파일 → 노트북 업로드로 여세요. "
-             "GitHub 다운로드 없이 포함 파일을 준비하고 공개 PyPI에서 패키지를 설치합니다.\n\n"
+             "helper·데이터는 노트북에 내장되어 있습니다. 압축 해제 직후에는 .py 파일이 보이지 않으며 준비 셀을 처음부터 순서대로 실행하면 임시 폴더에 생성됩니다. 마지막 준비 셀에서 파일 위치와 import 성공을 확인하세요. GitHub 다운로드 없이 공개 PyPI에서 패키지를 설치합니다.\n\n"
              "실제 API는 Colab Secrets의 키·모델과 RUN_LIVE=True가 필요합니다. "
              "12–14장은 읽기용이며 Docker·사내망 실습은 로컬에서 실행합니다.\n\n"
              "이 폴더는 자동 생성물입니다. 원본 notebooks/와 공통 파일을 수정한 뒤 다시 생성하세요.\n\n")
@@ -169,7 +179,7 @@ print("Working directory:", COLAB_ROOT)
     if language == 'en':
         guide = ('# Standalone Colab notebooks — English\n\n'
                  'Independent learning material, not produced or endorsed by OpenAI.\n\n'
-                 'Upload one .ipynb in Colab. No GitHub download is required. Dependencies install from public PyPI. '
+                 'Upload one .ipynb in Colab. Helpers and data are embedded in the notebook. Run preparation cells in order to create the files in a temporary folder; the final preparation cell confirms the helper import and file location. No GitHub download is required. Dependencies install from public PyPI. '
                  'For live API execution, configure Colab Secrets and RUN_LIVE=True. Chapters 12–14 are read-only here; '
                  'run Docker examples locally. Code is unchanged and may generate Korean reports.\n\n'
                  'Generated files; edit notebooks/ and translations/ instead.\n\n'

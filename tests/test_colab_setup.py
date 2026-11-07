@@ -48,7 +48,7 @@ class ColabSetupTests(unittest.TestCase):
                 namespace = {"os": os, "sys": sys}
                 before = list(sys.path)
                 try:
-                    with patch("tempfile.mkdtemp", return_value=folder), patch("urllib.request.urlopen", side_effect=AssertionError("No downloads")):
+                    with patch.dict(sys.modules), patch("tempfile.mkdtemp", return_value=folder), patch("urllib.request.urlopen", side_effect=AssertionError("No downloads")):
                         with contextlib.redirect_stdout(io.StringIO()):
                             for c in exported["cells"]:
                                 if "colab_asset" in c["metadata"].get("tags", []):
